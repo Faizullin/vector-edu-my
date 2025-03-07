@@ -1,0 +1,322 @@
+{% extends "lms/layouts/layout.html" %}
+{% load static %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    {% include 'lms/includes/layout-vertical.html' %}
+
+    <!-- [ Main Content ] start -->
+    <div class="pc-container">
+        <div class="pc-content">
+            {% include 'lms/includes/breadcrumb.html' %}
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h5 class="mb-0">
+                                    {{ card_header_title }}
+                                </h5>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% block main_form_content %}
+                                {% crispy form %}
+                            {% endblock %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- [ Main Content ] start -->
+
+
+    <div class="modal fade attachments-list-modal" tabindex="-1" role="dialog"
+         aria-labelledby="attachments-list-modal-title"
+         aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title h4 attachments-list-modal-title">
+                        {% trans 'Attachments' %}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="attachments-list">
+                        <div class="card-box">
+                            <div class="row">
+                                <div class="m-b-30">
+                                    <div class="d-flex justify-content-between">
+                                        <h4 class="header-title"> {% trans 'Attachments' %}</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="dropzone upload-dropzone mt-4 border-dashed rounded-2 min-h-0"></div>
+                                        <div class="text-center m-t-20">
+                                            <button class="upload-btn btn btn-primary">Upload Now</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <button class="selection-confirm-btn btn btn-primary">
+                                    Select
+                                </button>
+                            </div>
+                            <div class="row attachments-list-grid">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade share-access-modal" tabindex="-1" role="dialog"
+         aria-labelledby="share-access-modal-title"
+         aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title h4 share-access-modal-title">
+                        {% trans 'Share Access' %}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="share-access-modal-body">
+                        <div class="mb-4">
+                            <select></select>
+                        </div>
+                        <button type="button" class="share-access-submit-btn btn btn-primary">
+                            {% trans "Change" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {% if not disable_attachments %}
+        <link rel="stylesheet" href="https://dashboardkit.io/assets/css/plugins/dropzone.min.css"/>
+        <link rel="stylesheet" href="{% static 'my-plugins/attachments/attachments.css' %}">
+    {% endif %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"/>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"/>
+    <!-- Or for RTL support -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.rtl.min.css"/>
+
+{% endblock %}
+
+{% block javascript %}
+    {% if not disable_attachments %}
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"
+                integrity="sha512-U2WE1ktpMTuRBPoCFDzomoIorbOyUv0sP8B+INA3EzNAhehbzED1rOJg6bCqPf/Tuposxb5ja/MAUnC8THSbLQ=="
+                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script>
+        </script>
+        <script>
+            Dropzone.autoDiscover = false;
+            window.server_conf.items_edit = {
+                content_type: "{{ attachments.content_type }}",
+                object_id: "{{ attachments.object_id }}",
+                listApiUrl: "{% url 'lms:attachments-list-api' %}",
+                upload: {
+                    apiUrl: "{% url 'lms:attachments-upload-api' %}",
+                },
+                action: {
+                    apiUrl: "{% url 'lms:attachments-action-api' %}",
+                },
+                share_access: {
+                    list: {
+                        api_url: "{% url 'lms:share-access-obj-users-list-api' %}"
+                    },
+                    update: {
+                        api_url: "{% url 'lms:share-access-obj-users-update-api' %}"
+                    }
+                }
+            }
+        </script>
+        <script src="{% static 'my-plugins/attachments/AttachmentModalManager.js' %}"></script>
+        <script src="{% static 'my-plugins/attachments/ThumbnailImageWidgetManager.js' %}"></script>
+
+        <script>
+            $(document).ready(function () {
+                window.managers.checkManager("attachmentModal");
+                window.managers.attachmentModal = new AttachmentModalManager();
+                window.managers.checkManager("thumbnailImageWidget");
+                window.managers.thumbnailImageWidget = new ThumbnailImageWidgetManager(
+                    $(".thumbnail-attachment-container"),
+                    {
+                        ...window.server_conf.items_edit,
+                    }
+                );
+            });
+        </script>
+    {% endif %}
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        class Select2Manager {
+            constructor(selector, config) {
+                this.selector = selector;
+                this.intital_config = config;
+            }
+
+            init() {
+                self = this;
+                const selector_item = $(this.selector);
+                selector_item.each(function () {
+                    const el = $(this).on("select");
+                    const el_manager_data = el.data("manager-options");
+                    const listApiUrl = window.managers.urlFormatter.formatNotReadyUrl(el_manager_data.url);
+                    const key = el_manager_data.key;
+                    const label_field = el_manager_data.label_field;
+                    el.select2({
+                        theme: 'bootstrap-5',
+                        multiple: true,
+                        ajax: {
+                            url: listApiUrl,
+                            quietMillis: 500,
+                            dataType: 'json',
+                            data: function (params) {
+                                return {
+                                    search: params.term,
+                                };
+                            },
+                            processResults: function (data) {
+                                const result = {
+                                    results: data.results.map(function (item) {
+                                        return {
+                                            id: item[key],
+                                            text: item[label_field]
+                                        };
+                                    })
+                                };
+                                return result
+                            }
+                        }
+                    });
+                });
+            }
+        }
+
+        class ShareAccessWidget {
+            constructor(selector, config) {
+                this.selector = selector;
+                this.intital_config = config;
+                this.containerEl = $(this.selector);
+                this.inputSelectEl = this.containerEl.find("select");
+                this.shareAccessBtnEl = this.containerEl.find(".share-access-btn");
+            }
+
+            init() {
+                const self = this;
+                this.shareAccessBtnEl.on("click", function () {
+                    self.intital_config.onShareAccessBtnClick();
+                });
+            }
+        }
+
+        class ShareAccessManager {
+            constructor(config = {}) {
+                this.shareModalEl = $(".share-access-modal");
+                this.shareSelectInputEl = this.shareModalEl.find("select");
+                this.shareAccessSubmitBtnEl = this.shareModalEl.find(".share-access-submit-btn");
+                this.widgets = [];
+            }
+
+            init() {
+                const self = this;
+                this.selector = $(".share-access-container");
+                this.selector.each(function () {
+                    const el = $(this);
+                    const widget = new ShareAccessWidget(el, {
+                        onShareAccessBtnClick: function () {
+                            self.shareModalEl.modal("show");
+                        }
+                    });
+                    widget.init();
+                    self.widgets.push(widget);
+                });
+                const key = "id";
+                const label_field = "username";
+                const listApiUrl = window.server_conf.items_edit.share_access.list.api_url;
+                const updateApiUrl = window.server_conf.items_edit.share_access.update.api_url;
+                const args = {
+                    content_type: window.server_conf.items_edit.content_type,
+                    object_id: window.server_conf.items_edit.object_id,
+                };
+                this.shareSelectInputEl.select2({
+                    theme: 'bootstrap-5',
+                    multiple: true,
+                    ajax: {
+                        url: listApiUrl,
+                        quietMillis: 500,
+                        dataType: 'json',
+                        data: function (params) {
+                            return {
+                                ...args,
+                                search: params.term,
+                            };
+                        },
+                        processResults: function (data) {
+                            const result = {
+                                results: data.results.map(function (item) {
+                                    return {
+                                        id: item[key],
+                                        text: item[label_field]
+                                    };
+                                })
+                            };
+                            return result
+                        }
+                    },
+                    dropdownParent: self.shareModalEl,
+                });
+                this.shareAccessSubmitBtnEl.on("click", function () {
+                    const selectedUsers = self.shareSelectInputEl.val();
+                    self.shareAccessSubmitBtnEl.prop("disabled", true);
+                    $.ajax({
+                        url: updateApiUrl,
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": getCSRFToken(),
+                        },
+                        data: {
+                            users: selectedUsers,
+                            ...args,
+                        },
+                        success: function (data) {
+                            self.shareAccessSubmitBtnEl.prop("disabled", false);
+                            console.log(data);
+                        },
+                        error: function (error) {
+                            self.shareAccessSubmitBtnEl.prop("disabled", false);
+                            console.log(error);
+                        }
+                    });
+                });
+            }
+        }
+
+        $(document).ready(function () {
+            window.managers.checkManager("select2");
+            window.managers.select2 = new Select2Manager(
+                $(".genericmodelselectwidget"),
+            );
+            window.managers.select2.init();
+            window.managers.checkManager("share_access");
+            window.managers.share_access = new ShareAccessManager();
+            window.managers.share_access.init();
+        });
+    </script>
+{% endblock %}
+

@@ -1,0 +1,60 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:"en-gb" }}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <title>{% block title %}{% trans 'Dashboard' %}{% endblock title %}</title>
+    {#<meta#}
+    {#  name="description"#}
+    {#  content="Dashboardkit is trending dashboard template made using Bootstrap 5 design framework. Dashboardkit is available in Bootstrap, React, CodeIgniter, Angular,  and .net Technologies."#}
+    {#/>#}
+    {#<meta#}
+    {#  name="keywords"#}
+    {#  content="Bootstrap admin template, Dashboard UI Kit, Dashboard Template, Backend Panel, react dashboard, angular dashboard"#}
+    {#/>#}
+    {#<meta name="author" content="" />#}
+    {##}
+
+    <link rel="shortcut icon" href="{% static 'assets/images/favicon.svg' %}" type="image/x-icon">
+
+    <!-- [Google Font : Public Sans] icon -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700..700&display=swap" rel="stylesheet"/>
+    <!-- [phosphor Icons] https://phosphoricons.com/ -->
+    <link rel="stylesheet" href="{% static 'assets/fonts/phosphor/duotone/style.css' %}"/>
+    <!-- [Tabler Icons] https://tablericons.com -->
+    <link rel="stylesheet" href="{% static 'assets/fonts/tabler-icons.min.css' %}"/>
+    <!-- [Feather Icons] https://feathericons.com -->
+    <link rel="stylesheet" href="{% static 'assets/fonts/feather.css' %}"/>
+    <!-- [Font Awesome Icons] https://fontawesome.com/icons -->
+    <link rel="stylesheet" href="{% static 'assets/fonts/fontawesome.css' %}"/>
+    <!-- [Material Icons] https://fonts.google.com/icons -->
+    <link rel="stylesheet" href="{% static 'assets/fonts/material.css' %}"/>
+    <!-- [Template CSS Files] -->
+    <link rel="stylesheet" href="{% static 'assets/css/style.css' %}" id="main-style-link"/>
+
+    <!-- <script src="https://js.stripe.com/v3/"></script> -->
+    {% block stylesheets %}{% endblock stylesheets %}
+
+</head>
+
+<body data-pc-preset="preset-1" data-pc-sidebar-theme="dark" data-pc-header-theme="light" data-pc-sidebar-caption="true"
+      data-pc-direction="ltr" data-pc-theme="light">
+
+{% block content %}{% endblock %}
+
+{#{% include 'lms/includes/promo-fixed-button.html' %}#}
+{% include 'lms/includes/scripts.html' %}
+
+<!-- Specific Page JS goes HERE  -->
+<script src="{% static 'my-plugins/global/server_conf.js' %}"></script>
+<script src="{% static 'my-plugins/global/managers.js' %}"></script>
+{% block javascript %}{% endblock javascript %}
+
+
+</body>
+</html>

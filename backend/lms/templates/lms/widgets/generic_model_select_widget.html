@@ -1,0 +1,7 @@
+{% load i18n %}
+<div class="model-select-container">
+    <input type="hidden" name="{{ name }}" id="id_{{ name }}" value="{{ value|default:'' }}">
+    <span id="selected-{{ name }}">---</span>
+    <button type="button" class="btn btn-primary open-modal" data-modal-id="modal-{{ name }}">Select</button>
+</div>
+

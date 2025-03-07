@@ -1,0 +1,37 @@
+{% load i18n %}
+<div class="thumbnail-attachment-container">
+    <input type="hidden"
+           id="{{ widget.attrs.id }}"
+           name="{{ widget.name }}"
+           type="text"
+           value="{{ widget.value }}"
+           class="thumbnail-attachment-field"
+           data-widget-id-base="{{ widget.attrs.id }}"
+           data-role="thumbnail-input"
+            {% if related_instance_obj %}
+           data-id="{{ related_instance_obj.id }}" data-url="{{ related_instance_obj.file.url }}"
+           data-alt="{{ related_instance_obj.alt }}" data-name="{{ related_instance_obj.name }}"
+            {% endif %}
+            {% if widget.attrs.disabled %}
+           disabled="true"
+            {% endif %}
+            {% if widget.attrs.disabled %}
+           data-initial-disabled="true"
+            {% endif %}
+    />
+    <div class="btn-group btn-group-sm mb-3" role="group" aria-label="Buttons panel group">
+        <button class="btn btn-outline-primary thumbnail-upload-btn" type="button">
+            {% trans 'Upload' %}
+        </button>
+        <button class="btn btn-outline-danger thumbnail-remove-btn" type="button">
+            {% trans 'Remove' %}
+        </button>
+        <button class="btn btn-outline-secondary thumbnail-from-attachments-btn" type="button">
+            {% trans 'Attachments' %}
+        </button>
+    </div>
+    <div class="dropzone thumbnail-image-preview-container">
+        <img src="" alt="" class="img-fluid thumbnail-image-preview-img"/>
+        <div class="thumbnail-image-preview-initial-disabled-mask">First create object</div>
+    </div>
+</div>

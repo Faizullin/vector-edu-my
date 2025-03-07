@@ -1,0 +1,32 @@
+<!-- [ breadcrumb ] start -->
+<div class="page-header">
+    <div class="page-block">
+        <div class="row align-items-center g-0">
+            <div class="col-sm-auto">
+                <div class="page-header-title">
+                    <h5 class="mb-0">
+                        {{ page_header_title }}
+                    </h5>
+                </div>
+            </div>
+            <div class="col-sm-auto">
+                <ul class="breadcrumb">
+                    {% for crumb in breadcrumbs %}
+                        {% if not crumb.current %}
+                            <li class="breadcrumb-item">
+                                <a href="{{ crumb.url }}">
+                                    {{ crumb.label }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="breadcrumb-item active" aria-current="page">
+                                {{ crumb.label }}
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- [ breadcrumb ] end -->

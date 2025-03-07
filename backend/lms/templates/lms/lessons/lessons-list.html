@@ -1,0 +1,21 @@
+{% extends "lms/pages/items/items-list.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block javascript %}
+    {{ block.super }}
+    <script>
+        $(document).ready(function () {
+            $(document).on("click", ".open-pages-action-btn", function () {
+                const data = window.managers.itemsListTable.tableDatatable.row($(this).closest("tr")).data();
+                const editAction = window.managers.itemsListTable.actionsData.extra.find(function (action) {
+                    return action.name === "open-pages";
+                });
+                if (!editAction) {
+                    return;
+                }
+                window.location.href = window.managers.urlFormatter.formatUrlById(editAction.url, data, {}, "<int:lesson_id>");
+            });
+        });
+    </script>
+{% endblock %}

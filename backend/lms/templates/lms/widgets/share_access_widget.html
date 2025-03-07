@@ -1,0 +1,16 @@
+{% load i18n %}
+
+<div class="share-access-container">
+    <div class="btn-group btn-group-sm mb-3" role="group" aria-label="Buttons panel group">
+        <button class="btn btn-outline-primary share-access-btn" type="button">
+            {% trans 'Share Access' %}
+        </button>
+    </div>
+    <select name="{{ widget.name }}" id="{{ widget.attrs.id }}"
+            multiple="multiple" style="width: 100%;"
+            disabled="disabled" {% include "django/forms/widgets/attrs.html" %}>
+        {% for user in users %}
+            <option value="{{ user.id }}">{{ user.username }}</option>
+        {% endfor %}
+    </select>
+</div>

@@ -1,0 +1,18 @@
+{% extends "admin/change_form.html" %}
+
+{% block admin_change_form_document_ready %}
+    {{ block.super }}
+    <script>
+        (function($) {
+            $(document).ready(function() {
+                $('a.add-another').each(function() {
+                    var href = $(this).attr('href');
+                    $(this).attr('href', '#');
+                    $(this).click(function() {
+                        window.open(href, '_blank');
+                    });
+                });
+            });
+        })(django.jQuery);
+    </script>
+{% endblock %}

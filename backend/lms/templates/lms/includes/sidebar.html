@@ -1,0 +1,49 @@
+{% load i18n %}
+{% load static %}
+<!-- [ Sidebar Menu ] start -->
+<nav class="pc-sidebar">
+    <div class="navbar-wrapper">
+        <div class="m-header">
+            <a href="{% url 'lms:index' %}" class="b-brand text-primary">
+                <!-- ========   Change your logo from here   ============ -->
+                <img src="{% static 'assets/images/logo-white.svg' %}" alt="logo image" class="logo-lg"/>
+            </a>
+        </div>
+        <div class="navbar-content">
+            <ul class="pc-navbar">
+
+                <li class="pc-item pc-caption">
+                    <label>{% trans 'Navigation' %}</label>
+                </li>
+
+
+                {% for link in navigation_links %}
+                <li class="pc-item {% if link.submenu %}pc-hasmenu{% endif %}">
+                    <a href="{% if link.submenu %}#!{% else %}{% url link.url %}{% endif %}" class="pc-link">
+                        <span class="pc-micon">
+                            <i class="material-icons-two-tone">{{ link.icon }}</i>
+                        </span>
+                        <span class="pc-mtext">{% trans link.name %}</span>
+                        {% if link.submenu %}
+                            <span class="pc-arrow"><i data-feather="chevron-right"></i></span>
+                        {% endif %}
+                    </a>
+                    {% if link.submenu %}
+                        <ul class="pc-submenu">
+                            {% for sublink in link.submenu %}
+                                <li class="pc-item">
+                                    <a class="pc-link" href="{% url sublink.url %}">
+                                        {% trans sublink.name %}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </li>
+            {% endfor %}
+
+            </ul>
+        </div>
+    </div>
+</nav>
+<!-- [ Sidebar Menu ] end -->

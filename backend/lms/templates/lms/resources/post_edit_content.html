@@ -1,0 +1,481 @@
+{% extends "lms/layouts/layout.html" %}
+{% load static %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    {% include 'lms/includes/layout-vertical.html' %}
+
+    <!-- [ Main Content ] start -->
+    <div class="pc-container">
+        <div class="pc-content">
+            {% include 'lms/includes/breadcrumb.html' %}
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h5 class="mb-0">
+                                    {{ card_header_title }}
+                                </h5>
+                                <div>
+                                    <button class="attachments-modal-open-btn btn btn-outline-secondary">
+                                        {% trans "Attachments" %}
+                                    </button>
+                                    <button id="save-content-btn" class="btn btn-primary">
+                                        {% trans "Save" %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% csrf_token %}
+                            <div data-editorjs-wrapper>
+                                <div data-editorjs-holder></div>
+                                <textarea data-editorjs-input class="d-none">
+                                {% if editor.value %}
+                                    {{ editor.value|safe }}
+                                {% endif %}
+                              </textarea>
+                                <script data-editorjs-config type="application/json">
+                                {{ editorjs_config|safe }}
+                              </script>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- [ Main Content ] start -->
+
+
+    <div class="modal fade attachments-list-modal" tabindex="-1" role="dialog"
+         aria-labelledby="attachments-list-modal-title"
+         aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title h4 attachments-list-modal-title">{% trans 'Attachments' %}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="attachments-list">
+                        <div class="card-box">
+                            <div class="row">
+                                <div class="m-b-30">
+                                    <div class="d-flex justify-content-between">
+                                        <h4 class="header-title"> {% trans 'Attachments' %}</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="dropzone upload-dropzone mt-4 border-dashed rounded-2 min-h-0"></div>
+                                        <div class="text-center m-t-20">
+                                            <button class="upload-btn btn btn-primary">Upload Now</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <button class="selection-confirm-btn btn btn-primary">
+                                    Select
+                                </button>
+                            </div>
+                            <div class="row attachments-list-grid">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade component-edit-form-modal" tabindex="-1" role="dialog"
+         aria-labelledby="myAddFormModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title h4" id="myAddFormModalLabel">Large Modal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="tabs nav nav-tabs">
+                    </ul>
+                    <form class="form-container"></form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {% if not disable_attachments %}
+        <link rel="stylesheet" href="https://dashboardkit.io/assets/css/plugins/dropzone.min.css"/>
+        <link rel="stylesheet" href="{% static 'my-plugins/attachments/attachments.css' %}">
+    {% endif %}
+    <link rel="stylesheet" href="{% static 'my-plugins/editor/attachment-image.css' %}">
+{% endblock %}
+
+{% block javascript %}
+    {% if not disable_attachments %}
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"
+                integrity="sha512-U2WE1ktpMTuRBPoCFDzomoIorbOyUv0sP8B+INA3EzNAhehbzED1rOJg6bCqPf/Tuposxb5ja/MAUnC8THSbLQ=="
+                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script>
+        </script>
+        <script src="{% static 'my-plugins/attachments/AttachmentModalManager.js' %}"></script>
+        <script src="{% static 'my-plugins/attachments/ThumbnailImageWidgetManager.js' %}"></script>
+
+        <script>
+            Dropzone.autoDiscover = false;
+            window.server_conf.items_edit = {
+                content_type: "{{ attachments.content_type }}",
+                object_id: "{{ attachments.object_id }}",
+                listApiUrl: "{% url 'lms:attachments-list-api' %}",
+                upload: {
+                    apiUrl: "{% url 'lms:attachments-upload-api' %}",
+                },
+                action: {
+                    apiUrl: "{% url 'lms:attachments-action-api' %}",
+                },
+            };
+            window.server_conf.editor_data = {
+                baseApiUrl: "{% url 'lms:resources-post-edit-content-action-api' %}",
+                content_type: "{{ editor.content_type }}",
+                object_id: "{{ editor.object_id }}",
+                to_model_field_name: "{{ editor.to_model_field_name }}",
+            }
+
+            $(document).ready(function () {
+                window.managers.checkManager("attachmentModal");
+                window.managers.attachmentModal = new AttachmentModalManager();
+                window.managers.checkManager("thumbnailImageWidget");
+                window.managers.thumbnailImageWidget = new ThumbnailImageWidgetManager(
+                    $(".thumbnail-attachment-container"),
+                    {
+                        ...window.server_conf.items_edit,
+                    }
+                );
+            });
+        </script>
+
+    {% endif %}
+
+
+    {% for source in editor.media.js %}
+        <script src="{{ source }}"></script>
+    {% endfor %}
+
+    <script src="{% static 'my-plugins/editor/component-editor-modal-manager.js' %}"></script>
+    <script src="{% static 'my-plugins/quiz/question-edit-manager.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'my-plugins/editor/components/components.css' %}">
+    <script src="{% static 'my-plugins/editor/components/base-component-tool.js' %}"></script>
+    <script src="{% static 'my-plugins/editor/attachment-image.js' %}"></script>
+    <script src="{% static 'my-plugins/editor/components/q-line-wrapper.js' %}"></script>
+    <script src="{% static 'my-plugins/editor/components/blue-card-wrapper-tool.js' %}"></script>
+    <script src="{% static 'my-plugins/editor/components/audio-component-tool.js' %}"></script>
+    <script src="{% static 'my-plugins/editor/components/video-component-tool.js' %}"></script>
+    <script src="{% static 'my-plugins/editor/components/record-audio-component-tool.js' %}"></script>
+    <script src="{% static 'my-plugins/editor/components/question-component-tool.js' %}"></script>
+
+
+
+    <script>
+        /**
+         * @param {Object} config
+         * @param {String} tool
+         * @param {Object} default_config
+         */
+        function extractToolConfig(config, tool, default_config) {
+            var result = Object.assign({}, default_config);
+            if (config && config.tools && config.tools[tool]) {
+                if (config.tools[tool].disabled) {
+                    return undefined;
+                }
+                Object.assign(result, config.tools[tool]);
+            }
+            return result;
+        }
+
+        /**
+         * @param {Object} config
+         * @param {String} tool
+         */
+        function isDisabled(config, tool) {
+            return !!(
+                config &&
+                config.tools &&
+                config.tools[tool] &&
+                config.tools[tool].disabled
+            );
+        }
+
+        var editor;
+
+        /**
+         * @param {HTMLDivElement} field_wrapper
+         */
+        function initEditorJsField(field_wrapper) {
+            const holder_el = field_wrapper.querySelector("[data-editorjs-holder]");
+            const input_el = field_wrapper.querySelector("[data-editorjs-input]");
+            const config_el = field_wrapper.querySelector("[data-editorjs-config]");
+            const config = {};
+            const tools = {};
+            if (!isDisabled(config, "Image")) {
+                tools.Image = extractToolConfig(config, "Image", {
+                    class: ImageTool,
+                    inlineToolbar: true,
+                    "config": {
+                        uploader: {
+                            /**
+                             * Upload file to the server and return an uploaded image data
+                             * @param {File} file - file selected from the device or pasted by drag-n-drop
+                             * @return {Promise.<{success, file: {url}}>}
+                             */
+                            uploadByFile(file) {
+                                const formData = new FormData();
+                                formData.append('file', file);
+                                formData.append('content_type', window.server_conf.editor_data.content_type);
+                                formData.append('object_id', window.server_conf.editor_data.object_id);
+                                formData.append('to_model_field_name', window.server_conf.editor_data.to_model_field_name);
+                                formData.append('action', "image-upload-by-file");
+                                return $.ajax({
+                                    url: window.server_conf.editor_data.baseApiUrl,
+                                    type: 'POST',
+                                    data: formData,
+                                    dataType: 'JSON',
+                                    mimeType: "multipart/form-data",
+                                    contentType: false,
+                                    cache: false,
+                                    processData: false,
+                                    beforeSend: function (xhr) {
+                                        xhr.setRequestHeader("X-CSRFToken", $("[name=csrfmiddlewaretoken]").attr("value"));
+                                    },
+                                    success: function (response) {
+                                        if (response.success) {
+                                            return {
+                                                success: 1,
+                                                file: {
+                                                    url: response.url  // URL of the uploaded image
+                                                }
+                                            };
+                                        } else {
+                                            return {
+                                                success: 0,
+                                                error: response.error || 'Upload failed'
+                                            };
+                                        }
+                                    },
+                                    error: function (jqXHR, textStatus, errorThrown) {
+                                        return {
+                                            success: 0,
+                                            error: errorThrown || 'AJAX error'
+                                        };
+                                    }
+                                });
+                            },
+
+                            /**
+                             * Send URL-string to the server. Backend should load image by this URL and return an uploaded image data
+                             * @param {string} url - pasted image URL
+                             * @return {Promise.<{success, file: {url}}>}
+                             */
+                            uploadByUrl(url) {
+                                // your ajax request for uploading
+                                return $.ajax.upload(file).then(() => {
+                                    return {
+                                        success: 1,
+                                        file: {
+                                            url: action_url_base,
+                                            // any other image data you want to store, such as width, height, color, extension, etc
+                                        }
+                                    }
+                                })
+                            }
+                        }
+                    },
+                });
+            }
+
+            if (!isDisabled(config, "Header")) {
+                tools.Header = extractToolConfig(config, "Header", {
+                    class: Header,
+                });
+            }
+            if (!isDisabled(config, "Checklist")) {
+                tools.Checklist = extractToolConfig(config, "Checklist", {
+                    class: Checklist,
+                    inlineToolbar: true,
+                });
+            }
+            if (!isDisabled(config, "Quote")) {
+                tools.Quote = extractToolConfig(config, "Quote", {
+                    class: Quote,
+                    inlineToolbar: true,
+                });
+            }
+            if (!isDisabled(config, "Raw")) {
+                tools.Raw = extractToolConfig(config, "Raw", {
+                    class: RawTool,
+                });
+            }
+            if (!isDisabled(config, "Embed")) {
+                tools.Embed = extractToolConfig(config, "Embed", {
+                    class: Embed,
+                    inlineToolbar: true,
+                });
+            }
+            if (!isDisabled(config, "Delimiter")) {
+                tools.Delimiter = extractToolConfig(config, "Delimiter", {
+                    class: Delimiter,
+                });
+            }
+            if (!isDisabled(config, "Warning")) {
+                tools.Warning = extractToolConfig(config, "Warning", {
+                    class: Warning,
+                    inlineToolbar: true,
+                });
+            }
+            if (!isDisabled(config, "Link")) {
+                tools.Link = extractToolConfig(config, "Link", {
+                    class: LinkTool,
+                });
+            }
+            if (!isDisabled(config, "Marker")) {
+                tools.Marker = extractToolConfig(config, "Marker", {
+                    class: Marker,
+                });
+            }
+            if (!isDisabled(config, "Table")) {
+                tools.Table = extractToolConfig(config, "Table", {
+                    class: Table,
+                    inlineToolbar: true,
+                });
+            }
+
+
+            if (!isDisabled(config, "MyAttachmentImage")) {
+                tools.MyAttachmentImage = extractToolConfig(config, "MyAttachmentImage", {
+                    class: MyAttachmentImage,
+                    inlineToolbar: true,
+                    config: {
+                        placeholder: 'Paste image URL'
+                    }
+                });
+            }
+            if (!isDisabled(config, "QLineWrapper")) {
+                tools.QLinesWrapper = extractToolConfig(config, "QLineWrapper", {
+                    class: QLineWrapper,
+                    inlineToolbar: true,
+                });
+                tools.QLineWrapperAddFillInQuestionInlineTool = extractToolConfig(config, "QLineWrapperAddFillInQuestionInlineTool", {
+                    class: QLineWrapperAddFillInQuestionInlineTool,
+                    inlineToolbar: true,
+                });
+            }
+            if (!isDisabled(config, "BlueCardWrapperTool")) {
+                tools.BlueCardWrapperTool = extractToolConfig(config, "BlueCardWrapperTool", {
+                    class: BlueCardWrapperTool,
+                    inlineToolbar: true,
+                });
+            }
+            if (!isDisabled(config, "AudioComponentTool")) {
+                tools.AudioComponentTool = extractToolConfig(config, "AudioComponentTool", {
+                    class: AudioComponentTool,
+                    inlineToolbar: true,
+                });
+            }
+            if (!isDisabled(config, "VideoComponentTool")) {
+                tools.VideoComponentTool = extractToolConfig(config, "VideoComponentTool", {
+                    class: VideoComponentTool,
+                    inlineToolbar: true,
+                });
+            }
+            if (!isDisabled(config, "RecordAudioComponentTool")) {
+                tools.RecordAudioComponentTool = extractToolConfig(config, "RecordAudioComponentTool", {
+                    class: RecordAudioComponentTool,
+                    inlineToolbar: true,
+                });
+            }
+            if (!isDisabled(config, "QuestionComponentTool")) {
+                tools.QuestionComponentTool = extractToolConfig(config, "QuestionComponentTool", {
+                    class: QuestionComponentTool,
+                    inlineToolbar: true,
+                });
+            }
+
+
+            let initial_data = input_el.value.trim()
+
+            if (initial_data) {
+                try {
+                    initial_data = JSON.parse(initial_data)
+                } catch (error) {
+                    console.error(error);
+                    return false;
+                }
+            }
+            editor = new EditorJS({
+                holder: holder_el,
+                tools: tools,
+                data: initial_data,
+            });
+        }
+
+        $(document).ready(function () {
+            var editor_wrappers = document.querySelectorAll("[data-editorjs-wrapper]");
+            editor_wrappers.forEach(initEditorJsField);
+
+            $("#save-content-btn").on("click", function () {
+                editor.save().then((outputData) => {
+                    console.log('Saved data:', outputData);
+                    const url = window.managers.urlFormatter.formatNotReadyUrl(window.server_conf.editor_data.baseApiUrl, {
+                        action: "save-content",
+                    });
+
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: JSON.stringify({
+                            content: JSON.stringify(outputData),
+                            content_type: window.server_conf.editor_data.content_type,
+                            object_id: window.server_conf.editor_data.object_id,
+                            to_model_field_name: "content",
+                        }),
+                        dataType: "json",
+                        contentType: 'application/json',
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader("X-CSRFToken", $("[name=csrfmiddlewaretoken]").attr("value"));
+                        },
+                        success: function (response) {
+                            console.log(response);
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            alert('Failed to save content: ' + errorThrown);
+                            console.error(jqXHR.responseText);
+                        },
+                    });
+                }).catch((error) => {
+                    console.error('Failed to save data:', error);
+                });
+            });
+
+
+            $(".ce-popover-item[item-name=Image]");
+
+            $(".attachments-modal-open-btn").click(function () {
+                window.managers.attachmentModal.openModal();
+                window.managers.attachmentModal.loadAttachments();
+            });
+
+            window.managers.checkManager("componentEditorModal");
+            window.managers.componentEditorModal = new ComponentEditorModalManager({
+                holder: $(".component-edit-form-modal"),
+            });
+
+            window.managers.checkManager("questionEditManager");
+            window.managers.questionEditManager = new QuestionEditManager();
+        });
+    </script>
+{% endblock %}
+
