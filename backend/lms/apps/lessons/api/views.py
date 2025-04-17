@@ -1,53 +1,72 @@
-from django.db import transaction
-from django_filters import CharFilter
+from django.contrib.contenttypes.models import ContentType
+from django_filters import CharFilter, NumberFilter
 from django_filters.rest_framework import FilterSet
-from rest_framework import status
-from rest_framework.authentication import SessionAuthentication
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
-from api_lessons.models import Lesson, LessonPage
-from lms.apps.core.utils.api_actions import BaseAction, BaseActionException
-from lms.apps.core.utils.crud_base.views import BaseListApiView
-from .serializers import LessonSerializer, LessonPageSerializer, LessonPageBulkUpdateSubmitSerializer
+from api_lessons.models import Lesson, LessonPage, LessonBatch
+from lms.apps.core.utils.api_actions import BaseActionException
+from lms.apps.core.utils.crud_base.views import BaseViewSet
+from lms.apps.posts.models import Post
+from .serializers import LessonSerializer, LessonPageSerializer, \
+    LessonSubmitSerializer, LessonBatchSerializer, LessonPageReorderSubmitSerializer
 
 
-##########################################################
-# Lessons
-# ########################################################
+class LessonsBatchViewSet(BaseViewSet):
+    search_fields = ['title', ]
+    ordering_fields = ['id', ]
 
-class LessonListAPIView(BaseListApiView):
-    serializer_class = LessonSerializer
+    class LessonBatchFilter(FilterSet):
+        title = CharFilter(lookup_expr='icontains')
+
+        class Meta:
+            model = LessonBatch
+            fields = ['id', 'title', ]
+
+    filterset_class = LessonBatchFilter
+
+    def get_queryset(self):
+        queryset = LessonBatch.objects.all()
+        return queryset
+
+    def get_serializer_class(self):
+        return LessonBatchSerializer
+
+
+class LessonsLessonViewSet(BaseViewSet):
     search_fields = ['title', 'description']
-    authentication_classes = [SessionAuthentication, ]
     ordering_fields = ['id', 'order']
 
     class LessonFilter(FilterSet):
         title = CharFilter(lookup_expr='icontains')
+        batch_id = NumberFilter(field_name='lesson_batch', lookup_expr='exact')
 
         class Meta:
             model = Lesson
-            fields = ['id', 'title', ]
+            fields = ['id', 'title', 'batch_id']
 
     filterset_class = LessonFilter
 
     def get_queryset(self):
-        queryset = Lesson.objects.all()
-        return queryset
+        return Lesson.objects.all()
+
+    def perform_create(self, serializer):
+        kwargs = serializer.validated_data
+        kwargs["order"] = Lesson.objects.filter(lesson_batch=kwargs["lesson_batch"]).count() + 1
+        return Lesson.objects.create(**kwargs)
+
+    def get_serializer_class(self):
+        if self.request.method in ["POST", "PUT", "PATCH"]:
+            return LessonSubmitSerializer
+        return LessonSerializer
 
 
-##########################################################
-# Lesson Pages
-# ########################################################
-
-class LessonPageListAPIView(BaseListApiView):
-    serializer_class = LessonPageSerializer
-    search_fields = []
-    authentication_classes = [SessionAuthentication, ]
+class LessonsPageViewSet(BaseViewSet):
+    search_fields = ["id"]
     ordering_fields = ['id', 'order']
 
     class LessonPageFilter(FilterSet):
-        # lesson = IntFilter(lookup_expr='exact')
+        lesson_id = NumberFilter(field_name='lesson', lookup_expr='exact')
 
         class Meta:
             model = LessonPage
@@ -56,121 +75,57 @@ class LessonPageListAPIView(BaseListApiView):
     filterset_class = LessonPageFilter
 
     def get_queryset(self):
-        queryset = LessonPage.objects.all()
-        return queryset
+        return LessonPage.objects.all()
 
+    def get_serializer_class(self):
+        return LessonPageSerializer
 
-##########################################################
-# Lesson Actions
-# ########################################################
+    def perform_create(self, serializer):
+        kwargs = serializer.validated_data
+        kwargs["order"] = LessonPage.objects.filter(lesson=kwargs["lesson"]).count() + 1
+        return LessonPage.objects.create(**kwargs)
 
-class SaveOrderAction(BaseAction):
-    name = "save-order"
-
-    def apply(self, request):
-        content_type = request.GET.get('content_type', None)
-        if content_type is None:
-            raise BaseActionException("Incorrect params for this action.")
-        content_type = self.get_content_type_obj_from_model_name(content_type)
-        available_models = [Lesson, LessonPage]
-
-        print(available_models, content_type, content_type.model_class())
-        if content_type.model_class() not in available_models:
-            raise BaseActionException("`content_type` is invalid")
-
-        order = request.POST.getlist('order[]')
-        print(order)
-        if not order:
-            raise BaseActionException("`order` is required")
-
-        model_class = content_type.model_class()
-        items = model_class.objects.filter(id__in=order)
-        if items.count() != len(order):
-            raise BaseActionException("Some items do not exist")
-
-        for index, item_id in enumerate(order):
-            item = items.get(id=item_id)
-            item.order = index
-            item.save()
-
-        return {
-            "success": 1,
-            "data": "Order updated successfully"
-        }
-
-
-class LessonPageAddAction(BaseAction):
-    name = "lesson-page-add"
-
-    def apply(self, request):
-        lesson_id = request.data.get('lesson_id', None)
-        if lesson_id is None:
-            raise BaseActionException("`lesson_id` is required")
-        lesson = Lesson.objects.filter(id=lesson_id).first()
-        if lesson is None:
-            raise BaseActionException("`lesson` is invalid")
-        lesson_page = LessonPage.objects.create(lesson=lesson, order=lesson.pages.count() + 1)
-        return {
-            "success": 1,
-            "data": {
-                "id": lesson_page.id,
-                "lesson": lesson_page.lesson_id,
-                "order": lesson_page.order,
-            }
-        }
-
-
-class LessonPageReorder(BaseAction):
-    name = "lesson-page-reorder"
-
-    def apply(self, request):
-        serializer = LessonPageBulkUpdateSubmitSerializer(data=request.data)
-        if not serializer.is_valid():
-            return {
-                "success": 0,
-                "errors": serializer.errors
-            }
+    @action(detail=False, methods=['post'], url_path='reorder')
+    def reorder(self, request):
+        serializer = LessonPageReorderSubmitSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         lesson_obj = serializer.validated_data.get("lesson_id")
-        changes = serializer.validated_data.get("changes")
-        ids = [item["id"] for item in changes]
-        order_map = {item["id"]: item["order"] for item in changes}
-        items = lesson_obj.pages.filter(id__in=ids)
-        if items.count() != len(changes):
-            raise BaseActionException("Some items do not exist")
-        with transaction.atomic():
-            for page in items:
-                page.order = order_map[page.id]
-            LessonPage.objects.bulk_update(items, ["order"])
-        return {
-            "success": 1,
-            "data": {
-                "message": "Order updated successfully"
-            }
-        }
+        order_ids = serializer.validated_data.get("ordered_ids")
+        lesson_pages = list(lesson_obj.pages.all())
+        if len(lesson_pages) != len(order_ids):
+            raise BaseActionException("Incorrect order_ids count")
 
+        obj_list = []
+        for order, page_id in enumerate(order_ids):
+            found_page_obj = [page for page in lesson_pages if page.id == page_id]
+            if not found_page_obj:
+                return Response({"error": f"Page with id {page_id} not found in lesson pages"}, status=400)
+            found_page_obj[0].order = order + 1
+            obj_list.append(found_page_obj[0])
+        for order, obj in enumerate(obj_list):
+            obj.save()
+        return Response(LessonPageSerializer(obj_list, many=True).data)
 
-class LessonActionAPIView(APIView):
-    authentication_classes = [SessionAuthentication, ]
-
-    available_post_actions = [
-        SaveOrderAction(),
-        LessonPageAddAction(),
-        LessonPageReorder(),
-    ]
-
-    def post(self, request):
-        action = request.GET.get('action', None)
-        if action is None:
-            return Response({'success': 0, "message": "`action` is required"}, status=status.HTTP_400_BAD_REQUEST)
-        use_action = None
-        for i in self.available_post_actions:
-            if i.name == action:
-                use_action = i
-                break
-        if use_action is None:
-            return Response({'success': 0, "message": "`action` is invalid"}, status=status.HTTP_400_BAD_REQUEST)
+    @action(detail=True, methods=['post'], url_path='get-editor')
+    def get_editor(self, request, *args, **kwargs):
+        lesson_page_obj = self.get_object()
+        ctype = ContentType.objects.get_for_model(LessonPage)
         try:
-            response = use_action.apply(request)
-            return Response(response, status=status.HTTP_200_OK)
-        except BaseActionException as e:
-            return Response({'success': 0, 'message': str(e)}, status=e.status)
+            post_obj = Post.objects.get(content_type=ctype.id, object_id=lesson_page_obj.id)
+        except Post.DoesNotExist:
+            author = request.user
+            title = f"Post for lesson page [{lesson_page_obj.id}]` #{lesson_page_obj.order}"
+            post_obj = Post.objects.create(
+                title=title,
+                author=author,
+                post_type="editor",
+                content_type=ctype,
+                object_id=lesson_page_obj.id
+            )
+
+        return Response({
+            "post": {
+                "id": post_obj.id,
+                "title": post_obj.title,
+            }
+        })

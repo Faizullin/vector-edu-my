@@ -12,8 +12,16 @@ class LessonBatchSerializer(serializers.ModelSerializer):
         fields = ("id", "title",)
 
 
+class LessonSubmitSerializer(serializers.ModelSerializer):
+    order = serializers.IntegerField(required=False)
+
+    class Meta:
+        model = Lesson
+        fields = ["id", "is_available_on_free", "lesson_batch", "title", "description", "order"]
+
+
 class LessonSerializer(serializers.ModelSerializer):
-    lesson_batch = LessonBatchSerializer(read_only=True)
+    lesson_batch = LessonBatchSerializer()
 
     class Meta:
         model = Lesson
@@ -21,19 +29,13 @@ class LessonSerializer(serializers.ModelSerializer):
 
 
 class LessonPageSerializer(serializers.ModelSerializer):
+    order = serializers.IntegerField(required=False)
+
     class Meta:
         model = LessonPage
         fields = ["id", "lesson", "order", ]
 
 
-class LessonPageSerializerSubmitSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(required=True)
-
-    class Meta:
-        model = LessonPage
-        fields = ["id", "order"]
-
-
-class LessonPageBulkUpdateSubmitSerializer(serializers.Serializer):
+class LessonPageReorderSubmitSerializer(serializers.Serializer):
     lesson_id = serializers.PrimaryKeyRelatedField(queryset=Lesson.objects.all())
-    changes = LessonPageSerializerSubmitSerializer(many=True, write_only=True)
+    ordered_ids = serializers.ListField(child=serializers.IntegerField())

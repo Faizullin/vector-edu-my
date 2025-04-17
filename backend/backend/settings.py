@@ -271,3 +271,12 @@ if DEBUG_MODE:
         'RESULTS_CACHE_SIZE': 100,
         'SQL_WARNING_THRESHOLD': 2000
     }
+
+    # allow frontend cors
+
+    CORS_ALLOWED_ORIGINS = [
+        'http://localhost:3030',
+    ]
+    CORS_ALLOW_CREDENTIALS = True
+
+    del REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"]

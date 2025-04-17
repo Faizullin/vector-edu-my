@@ -1,9 +1,5 @@
-from typing import Type
-
-from protected_media.models import ProtectedFileField
 from django.db import models
-
-from django.contrib import admin
+from protected_media.models import ProtectedFileField
 
 from backend.global_function import PathAndRename
 from .__component_base import ComponentBase

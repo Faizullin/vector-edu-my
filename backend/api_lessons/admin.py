@@ -127,3 +127,6 @@ for model in models_just_register:
     if issubclass(model, UserModel):
         continue
     admin.site.register(model, admin.ModelAdmin)
+
+
+admin.site.register(VimeoUrlCacheModel)

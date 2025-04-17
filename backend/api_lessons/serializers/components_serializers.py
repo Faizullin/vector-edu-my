@@ -1,5 +1,6 @@
-from api_lessons.models import *
 from rest_framework import serializers
+
+from api_lessons.models import *
 from backend.global_function import ModelIntegerField, NestedSupportedModelSerializer
 
 

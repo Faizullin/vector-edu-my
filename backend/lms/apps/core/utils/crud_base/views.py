@@ -4,10 +4,11 @@ from django.shortcuts import resolve_url
 from django.utils.translation import gettext as _
 from django.views.generic import CreateView, UpdateView, TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import generics
+from rest_framework import generics, permissions, viewsets, filters, status
 from rest_framework import pagination
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.response import Response
 
 
 def get_default_add_success_message(name, id):
@@ -195,7 +196,44 @@ class BaseListApiView(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     ordering_fields = ['id', 'created_at', 'updated_at']
     filterset_class = None
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser,)
     authentication_classes = [SessionAuthentication, ]
 
 
-__ALL__ = ["BaseCreateView", "BaseUpdateView", "BaseListView", "BaseListApiView"]
+class BaseViewSet(viewsets.ModelViewSet):
+    authentication_classes = (SessionAuthentication,)
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    pagination_class = CustomPagination
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    ordering_fields = ['id']
+    ordering = ['-id']
+
+    def list(self, request, *args, **kwargs):
+        if request.GET.get('disablePagination', None) is not None:
+            self.pagination_class = None
+
+        return super().list(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        return serializer.save()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        new_obj = self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        res = serializer.data
+        if not "id" in res:
+            res["id"] = new_obj.id
+        return Response(res, status=status.HTTP_201_CREATED, headers=headers)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({
+            'request': self.request,
+            'view': self,
+        })
+        return context
+
+
+__ALL__ = ["BaseCreateView", "BaseUpdateView", "BaseListView", "BaseListApiView", "BaseViewSet"]

@@ -1,20 +1,22 @@
 import json
 from datetime import timedelta
 from decimal import Decimal as D
-from decimal import ROUND_UP
 
 from django import forms
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import Avg, Count, Sum
+from django.shortcuts import resolve_url
 from django.template.response import TemplateResponse
 from django.urls import reverse_lazy
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
-from django.contrib.auth import get_user_model
-from django.shortcuts import resolve_url
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from lms.apps.core.utils.crud_base.views import BaseNavsViewMixin
 
@@ -270,10 +272,36 @@ class CustomLoginForm(AuthenticationForm):
 
 
 class LoginView(auth_views.LoginView):
-    template_name = "lms/dashboard/login.html"
+    template_name = "lms/login.html"
     authentication_form = CustomLoginForm
-    login_redirect_url = reverse_lazy("lms:index")
+
+    def get_redirect_url(self):
+        return self.request.GET.get("next", reverse_lazy("lms:index"))
 
     def get_success_url(self):
         url = self.get_redirect_url()
-        return url or self.login_redirect_url
+        return url
+
+
+class AuthGetCSRFView(APIView):
+
+    def get(self, request):
+        return Response(
+            {
+                "csrfmiddlewaretoken": request.COOKIES.get("csrftoken")
+            }
+        )
+
+
+class SettingsAPIView(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    contexter = BaseNavsViewMixin()
+
+    def get(self):
+        context = self.contexter.get_context_navigation_links()
+        return Response(
+            {
+                "nav": context
+            }
+        )

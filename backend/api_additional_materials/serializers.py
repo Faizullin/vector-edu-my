@@ -80,3 +80,4 @@ class AdditionalLessonBatchWithoutComponentsSerializer(serializers.ModelSerializ
     class Meta:
         model = AdditionalLessonBatch
         exclude = ['timestamp']
+

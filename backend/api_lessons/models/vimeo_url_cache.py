@@ -21,13 +21,14 @@ def get_video_link_from_vimeo(vimeo_link):
     cached_video = VimeoUrlCacheModel.objects.filter(vimeo_link=vimeo_link, expire_time__gt=now).first()
     if cached_video:
         return cached_video.playable_video_link
-
     video_id = vimeo_link.split('/')[-1]
+    url = f'https://api.vimeo.com/videos/{video_id}?fields=play'
     headers = {'Authorization': 'Bearer ' + VIMEO_ACCESS_TOKEN}
-    response = requests.get(f'https://api.vimeo.com/videos/{video_id}?fields=play', headers=headers)
-    if not response.json().get('play', False):
+    response = requests.get(url, headers=headers)
+    response_json = response.json()
+    if not response_json.get('play', False):
         return 'https://dummylink.dummy'
-    progressive = response.json()['play']['progressive']
+    progressive = response_json['play']['progressive']
     video = [video for video in progressive if video['rendition'] == '1080p'][0]
 
     expire_time = parse_datetime(video['link_expiration_time'])
