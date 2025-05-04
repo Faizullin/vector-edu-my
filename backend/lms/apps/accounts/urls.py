@@ -9,4 +9,7 @@ router.register(r'api/v1/lms/accounts/users', api_views.UserViewSet, basename='u
 
 urlpatterns = [
     path('', include(router.urls)),
+    path("api/v1/lms/auth/login/",      api_views.LoginView.as_view()),
+    path("api/v1/lms/auth/logout/",     api_views.LogoutView.as_view()),
+    path("api/v1/lms/auth/me/",     api_views.UserMeView.as_view()),
 ]

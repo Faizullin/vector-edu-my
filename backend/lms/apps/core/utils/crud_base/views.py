@@ -205,7 +205,7 @@ class BaseViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    ordering_fields = ['id']
+    ordering_fields = ['id', "created_at", "updated_at"]
     ordering = ['-id']
 
     def list(self, request, *args, **kwargs):

@@ -1,13 +1,13 @@
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.contrib.auth import views as auth_views
 from . import views
 
 app_name = "lms"
 
 urlpatterns = [
-    path('lms', views.IndexView.as_view(), name='index'),
-    path('api/v1/lms/settings', views.SettingsAPIView.as_view(), name='settings-api'),
+    re_path(r"^lms(?:/.*)?$", views.IndexView.as_view(), name="index"),
+    path("api/v1/lms/settings", views.SettingsAPIView.as_view(), name="settings-api"),
     path("", include("lms.apps.resources.urls")),
     path("", include("lms.apps.attachments.urls")),
     path("", include("lms.apps.lessons.urls")),

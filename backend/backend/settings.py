@@ -22,7 +22,6 @@ ALLOWED_HOSTS = os.environ.get(
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "http://localhost").split(" ")
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -43,8 +42,6 @@ INSTALLED_APPS = [
     'api_data_collection',
     'api_global_event',
     'api_additional_materials',
-    "crispy_forms",
-    "crispy_bootstrap5",
 ]
 
 MIDDLEWARE = [
@@ -245,8 +242,6 @@ PROTECTED_MEDIA_AS_DOWNLOADS = False
 VIMEO_ACCESS_TOKEN = os.environ.get("VIMEO_ACCESS_TOKEN", '')
 
 DEBUG_MODE = bool(os.environ.get("DEBUG", default=1))
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
-CRISPY_TEMPLATE_PACK = "bootstrap5"
 INSTALLED_APPS += [
     "lms",
     "lms.apps.core",

@@ -72,7 +72,7 @@ class LessonsPageViewSet(BaseViewSet):
             model = LessonPage
             fields = ['id', 'lesson', ]
 
-    filterset_class = LessonPageFilter
+    # filterset_class = LessonPageFilter
 
     def get_queryset(self):
         return LessonPage.objects.all()

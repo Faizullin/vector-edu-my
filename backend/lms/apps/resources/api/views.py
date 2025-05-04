@@ -21,10 +21,21 @@ from .serializers import PostSerializer, TagSerializer, QuestionComponentSeriali
     LoadComponentsDataActionSubmitSerializer, ImageComponentSerializer, \
     BuildAndPublishPostActionSubmitSerializer, LessonPageElementSerializer, HotUpdateActionParamsSerializer, \
     TextComponentSerializer, MatchingComponentSerializer
+    
+from django_filters.rest_framework import FilterSet
+from django_filters import CharFilter
 
 
 class ResourcesPostViewSet(BaseViewSet):
     search_fields = ['title', ]
+    
+    class PostFilter(FilterSet):
+        title = CharFilter(lookup_expr='icontains')
+
+        class Meta:
+            model = Post
+            fields = ['id', 'title', "author", "publication_status"]
+    filterset_class = PostFilter
 
     def get_queryset(self):
         return Post.objects.all().prefetch_related('author', 'category', 'thumbnail')
