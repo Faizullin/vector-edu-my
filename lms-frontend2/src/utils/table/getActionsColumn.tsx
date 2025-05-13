@@ -21,26 +21,31 @@ export function getActionsColumn<T>(conf: {
             delete?: (row: Row<T>) => void;
         },
     } | undefined;
-} | undefined = undefined) {
+} | undefined = undefined): DisplayColumnDef<T> {
     const { actions, options } = conf || {};
-    const defaultActions: ActionColumn<T>[] = [
-        {
-            render: ({ row, key }) => (
-                <IconButton key={key} size="xs" aria-label="actions edit" variant="ghost" onClick={() => options?.defaultActions?.edit?.(row)} color={"blue.500"}>
-                    <FiPenTool />
-                </IconButton>
-            ),
-            displayType: "default",
-        },
-        {
-            render: ({ row, key, }) => (
-                <IconButton key={key} size="xs" aria-label="actions destroy" variant="ghost" onClick={() => options?.defaultActions?.delete?.(row)} color={"red.500"}>
-                    <FiTrash />
-                </IconButton>
-            ),
-            displayType: "default",
-        },
-    ];
+    const defaultActions: ActionColumn<T>[] = [];
+    if (options?.defaultActions) {
+        if (options.defaultActions.edit) {
+            defaultActions.push({
+                render: ({ row, key, }) => (
+                    <IconButton key={key} size="xs" aria-label="actions edit" variant="ghost" onClick={() => options?.defaultActions?.edit?.(row)} color={"blue.500"}>
+                        <FiPenTool />
+                    </IconButton>
+                ),
+                displayType: "default",
+            });
+        }
+        if (options.defaultActions.delete) {
+            defaultActions.push({
+                render: ({ row, key, }) => (
+                    <IconButton key={key} size="xs" aria-label="actions destroy" variant="ghost" onClick={() => options?.defaultActions?.delete?.(row)} color={"red.500"}>
+                        <FiTrash />
+                    </IconButton>
+                ),
+                displayType: "default",
+            });
+        }
+    }
     const actionsList = (options?.disableDefaultActions ? (actions || []) : [...(actions || []), ...defaultActions]).filter((action) => {
         return action.displayType === "default";
     });

@@ -16,7 +16,7 @@ type Props<T> = {
   sorting: SortingState;
   onSortingChange: OnChangeFn<SortingState>;
   loading?: boolean;
-  reactTableProps?: TableOptions<T>;
+  reactTableProps?: Partial<TableOptions<T>>;
 };
 
 declare module "@tanstack/react-table" {
@@ -71,6 +71,9 @@ export function DataTable<T>({
     manualSorting: true,
     manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
+
+    enableRowSelection: true,
+    enableMultiRowSelection: true,
     ...reactTableProps,
   });
   return (

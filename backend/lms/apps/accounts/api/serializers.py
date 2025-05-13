@@ -16,6 +16,8 @@ class UserSerializer(serializers.ModelSerializer):
             "is_active",
             "is_staff",
             "is_superuser",
+            "is_paid",
+            "user_type",
         ]
 
 

@@ -88,31 +88,32 @@ const getUrl = (config: ApiConfigType, options: ApiRequestOptions): string => {
 
 export const getFormData = (
     options: ApiRequestOptions,
-): FormData | undefined => {
-    if (options.formData) {
-        const formData = new FormData()
+) => {
+    return options.formData;
+    // if (options.formData) {
+    //     const formData = new FormData()
 
-        const process = (key: string, value: unknown) => {
-            if (isString(value) || isBlob(value)) {
-                formData.append(key, value)
-            } else {
-                formData.append(key, JSON.stringify(value))
-            }
-        }
+    //     const process = (key: string, value: unknown) => {
+    //         if (isString(value) || isBlob(value)) {
+    //             formData.append(key, value)
+    //         } else {
+    //             formData.append(key, JSON.stringify(value))
+    //         }
+    //     }
 
-        Object.entries(options.formData)
-            .filter(([, value]) => value !== undefined && value !== null)
-            .forEach(([key, value]) => {
-                if (Array.isArray(value)) {
-                    value.forEach((v) => process(key, v))
-                } else {
-                    process(key, value)
-                }
-            })
+    //     Object.entries(options.formData)
+    //         .filter(([, value]) => value !== undefined && value !== null)
+    //         .forEach(([key, value]) => {
+    //             if (Array.isArray(value)) {
+    //                 value.forEach((v) => process(key, v))
+    //             } else {
+    //                 process(key, value)
+    //             }
+    //         })
 
-        return formData
-    }
-    return undefined
+    //     return formData
+    // }
+    // return undefined
 }
 
 type Resolver<T> = (options: ApiRequestOptions<T>) => Promise<T>
@@ -196,7 +197,7 @@ export const sendRequest = async <T>(
     options: ApiRequestOptions<T>,
     url: string,
     body: unknown,
-    formData: FormData | undefined,
+    formData: any | undefined,
     headers: Record<string, string>,
     onCancel: OnCancel,
     axiosClient: AxiosInstance,

@@ -7,9 +7,15 @@ User = get_user_model()
 
 
 class LessonBatchSerializer(serializers.ModelSerializer):
+    lesson_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = LessonBatch
-        fields = ("id", "title",)
+        fields = (
+            "id",
+            "title",
+            "lesson_count",
+        )
 
 
 class LessonSubmitSerializer(serializers.ModelSerializer):
@@ -17,15 +23,38 @@ class LessonSubmitSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lesson
-        fields = ["id", "is_available_on_free", "lesson_batch", "title", "description", "order"]
+        fields = [
+            "id",
+            "is_available_on_free",
+            "lesson_batch",
+            "title",
+            "description",
+            "order",
+        ]
+
+
+class LessonBatchConnectedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LessonBatch
+        fields = (
+            "id",
+            "title",
+        )
 
 
 class LessonSerializer(serializers.ModelSerializer):
-    lesson_batch = LessonBatchSerializer()
+    lesson_batch = LessonBatchConnectedSerializer()
 
     class Meta:
         model = Lesson
-        fields = ["id", "is_available_on_free", "lesson_batch", "title", "description", "order"]
+        fields = [
+            "id",
+            "is_available_on_free",
+            "lesson_batch",
+            "title",
+            "description",
+            "order",
+        ]
 
 
 class LessonPageSerializer(serializers.ModelSerializer):
@@ -33,7 +62,11 @@ class LessonPageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LessonPage
-        fields = ["id", "lesson", "order", ]
+        fields = [
+            "id",
+            "lesson",
+            "order",
+        ]
 
 
 class LessonPageReorderSubmitSerializer(serializers.Serializer):

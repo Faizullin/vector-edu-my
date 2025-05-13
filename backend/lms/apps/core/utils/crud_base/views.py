@@ -4,6 +4,7 @@ from django.shortcuts import resolve_url
 from django.utils.translation import gettext as _
 from django.views.generic import CreateView, UpdateView, TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
+from lms.apps.core.utils.exceptions import StandardizedViewMixin
 from rest_framework import generics, permissions, viewsets, filters, status
 from rest_framework import pagination
 from rest_framework.authentication import SessionAuthentication
@@ -200,7 +201,7 @@ class BaseListApiView(generics.ListAPIView):
     authentication_classes = [SessionAuthentication, ]
 
 
-class BaseViewSet(viewsets.ModelViewSet):
+class BaseViewSet(StandardizedViewMixin, viewsets.ModelViewSet):
     authentication_classes = (SessionAuthentication,)
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     pagination_class = CustomPagination

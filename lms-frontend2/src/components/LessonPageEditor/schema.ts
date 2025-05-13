@@ -1,7 +1,9 @@
 import { BlockNoteEditor, BlockNoteSchema, defaultBlockSpecs } from "@blocknote/core";
 import { DefaultReactSuggestionItem, getDefaultReactSlashMenuItems } from "@blocknote/react";
 import { BluecardBlock } from "./components/blocks/bluecard/BluecardBlock";
+import { ImageBlock } from "./components/blocks/image/ImageBlock";
 import { VideoBlock } from "./components/blocks/video/VideoBlock";
+import { QuestionBlock } from "./components/blocks/question/QuestionBlock";
 
 
 
@@ -29,4 +31,6 @@ const generator = (blocks: Array<any>) => {
 export default generator([
   BluecardBlock,
   VideoBlock,
+  ImageBlock,
+  QuestionBlock,
 ]);

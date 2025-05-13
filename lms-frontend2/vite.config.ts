@@ -25,8 +25,6 @@ if (configOuput.VITE_APP_USE_BACKEND_PROXY) {
   serverConfig.proxy = getProxyUrlsDict();
 }
 
-
-
 // https://vite.dev/config/
 export default defineConfig({
   // base: '/static/', // Only for production

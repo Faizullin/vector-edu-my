@@ -3,6 +3,7 @@
  * without specific UI library integrations
  */
 
+import { Log } from '@/utils/log';
 import React, { PropsWithChildren, ReactNode, useCallback, useContext, useEffect, useMemo, useReducer } from 'react';
 
 // State interfaces
@@ -219,7 +220,7 @@ const getModalId = (modal: string | React.FC<any>): string => {
 };
 
 // Type helpers for show function
-type NiceModalArgs<T> = T extends keyof JSX.IntrinsicElements | React.JSXElementConstructor<any>
+export type NiceModalArgs<T> = T extends keyof JSX.IntrinsicElements | React.JSXElementConstructor<any>
   ? React.ComponentProps<T>
   : Record<string, unknown>;
 
@@ -453,7 +454,7 @@ const NiceModalPlaceholder: React.FC = () => {
 
   visibleModalIds.forEach((id) => {
     if (!MODAL_REGISTRY[id] && !ALREADY_MOUNTED[id]) {
-      console.warn(
+      Log.warn(
         `No modal found for id: ${id}. Please check the id or if it is registered or declared via JSX.`,
       );
       return;

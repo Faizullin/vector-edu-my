@@ -79,3 +79,4 @@ zope.interface==6.2
 
 django-debug-toolbar
 django-filter
+drf-standardized-errors

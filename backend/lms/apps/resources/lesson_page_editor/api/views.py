@@ -1,7 +1,11 @@
+import json
 from api_lessons.models.lesson_components.__component_base import LessonPage
+from api_lessons.models.lesson_components.__page_element import LessonPageElement
+from api_lessons.serializers.components_serializers import LessonPageSerializer
 from lms.apps.core.utils.api_actions import BaseAction, BaseActionException
 from lms.apps.editor.api.views import BaseContentEditorActionAPIView
 from lms.apps.posts.models import Post
+from lms.apps.resources.api.components_utils import COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT, COMPONENT_NAME_TO_ELEMENT_FIELD_NAME_DICT
 from .serializers import (
     BasePostEditSerializer,
     BuildAndPublishContentSerializer,
@@ -81,42 +85,37 @@ def get_serializer_class_by_component_type(component_type):
     return data_dict.get(component_type, None)
 
 
-# class HotUpdateComponentAction(BaseAction):
-#     name = "hot-update-component"
+class LoadDemoLessonDataAction(BaseAction):
+    name = "load-demo-lesson-data"
 
-#     def apply(self, request):
-#         serializer = HotUpdateActionParamsSerializer(data=request.GET)
-#         if not serializer.is_valid():
-#             raise BaseActionException(serializer.errors)
-#         component_type = serializer.validated_data['component_type']
-#         component_class = COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT[component_type]
-#         mode = serializer.validated_data['mode']
-#         component_id = serializer.validated_data.get('component_id')
-#         component_obj = None
-#         if mode == "edit":
-#             try:
-#                 component_obj = component_class.objects.get(pk=component_id)
-#             except component_class.DoesNotExist:
-#                 raise BaseActionException("`component_id` is invalid")
-#         elif mode == "new":
-#             component_obj = component_class()
-
-#         # do partial validation
-#         serializer = get_serializer_class_by_component_type(component_type)(component_obj, data=request.data,
-#                                                                             partial=True)
-#         if not serializer.is_valid():
-#             raise BaseActionException(serializer.errors)
-#         serializer.save()
-#         return {
-#             "success": 1,
-#             "data": {
-#                 "instance": serializer.data,
-#             }
-#         }
+    def apply(self, request):
+        serializer = BasePostEditSerializer(data=request.data)
+        if not serializer.is_valid():
+            raise ActionRequestException(serializer.errors)
+        try:
+            post_obj = Post.objects.get(pk=serializer.validated_data["post_id"])
+        except Post.DoesNotExist:
+            raise BaseActionException("`post_id` is invalid")
+        except Exception as e:
+            raise BaseActionException(str(e))
+        LessonPageModel = post_obj.content_type.model_class()
+        try:
+            lesson_page_obj = LessonPageModel.objects.get(pk=post_obj.object_id)
+        except LessonPageModel.DoesNotExist:
+            raise BaseActionException("`object_id` is invalid")
+        except Exception as e:
+            raise BaseActionException(str(e))
+        lesson_page_serializer = LessonPageSerializer(lesson_page_obj)
+        return {
+            "success": 1,
+            "data": {
+                "lesson_page": lesson_page_serializer.data,
+            },
+        }
 
 
-class BuildAndPublishPostAction(BaseAction):
-    name = "build-and-publish-post"
+class BuildAndPublishContentAction(BaseAction):
+    name = "build-and-publish-content"
 
     def apply(self, request):
         serializer = BuildAndPublishContentSerializer(data=request.data)
@@ -136,8 +135,106 @@ class BuildAndPublishPostAction(BaseAction):
             raise BaseActionException(
                 "Incorrect connection between Lesson Page and Post Editor object"
             )
-        validated_data = serializer.validated_data
-        elements = validated_data.get("elements")
+        formatted_content = serializer.validated_data["content"].strip()
+        try:
+            formatted_content = json.loads(formatted_content)
+        except json.JSONDecodeError:
+            raise BaseActionException("`content` is not a valid JSON string")
+        print("formatted_content", formatted_content)
+        els_data = []
+        new_formatted_content_data = []
+        for index, i in enumerate(formatted_content):
+            i_data = i.get("props").get("data")
+            i_data_obj = i_data.get("obj", None)
+            i_data_obj_values = i_data.get("values", None)
+            i_block_id = i.get("id")
+            i_type = i.get("type")
+            i_data_staticNotEditable = i_data.get("staticNotEditable", False)
+            component_class = COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT.get(i_type)
+            if component_class is None:
+                raise BaseActionException("item `type` is invalid")
+            field_name = COMPONENT_NAME_TO_ELEMENT_FIELD_NAME_DICT.get(i_type)
+            obj_kwargs = {
+                "page": page_obj,
+                "order": index + 1,
+            }
+            component_obj = component_class(**obj_kwargs)
+            if i_data_obj is None:
+                if i_data_obj_values is None:
+                    raise BaseActionException("`obj` or `values` is required")
+                component_serializer = get_serializer_class_by_component_type(i_type)(
+                    data=i_data_obj_values, partial=True
+                )
+                if not component_serializer.is_valid():
+                    raise ActionRequestException({
+                        "errors": component_serializer.errors,
+                        "block_id": i_block_id,
+                        "component_type": i_type,
+                    })
+                component_obj = component_serializer.save()
+                obj_kwargs[field_name] = component_obj
+            else:
+                if i_data_staticNotEditable:
+                    try:
+                        component_obj = component_class.objects.get(
+                            pk=i_data_obj.get("id")
+                        )
+                    except component_class.DoesNotExist:
+                        raise BaseActionException("`component_id` is invalid for staticNotEditable")
+                else:
+                    component_serializer = get_serializer_class_by_component_type(i_type)(
+                        data=i_data_obj, partial=True
+                    )
+                    if not component_serializer.is_valid():
+                        raise ActionRequestException({
+                            "errors": component_serializer.errors,
+                            "block_id": i_block_id,
+                            "component_type": i_type,
+                        })
+                    component_obj = component_serializer.save()
+                    obj_kwargs[field_name] = component_obj
+            els_data.append(obj_kwargs)  
+            new_i_ = i.copy()
+            if component_obj:
+                new_i_["props"]["data"]["obj"] = component_serializer.data
+            new_content.append(new_i_)
+
+        print("new_content", new_content)
+
+        page_obj.elements.delete()
+        element_page_list = []
+        for item in els_data:
+            if item.get('id'):
+                obj = LessonPageElement.objects.get(pk=item.get('id'))
+                obj.page = item.get('page')
+                obj.order = item.get('order')
+                obj.save()
+                element_page_list.append(obj)
+            else:
+                obj = LessonPageElement.objects.create(**item)
+                element_page_list.append(obj)
+
+        print("element_page_list", element_page_list)
+
+        new_content = []
+        for i in formatted_content:
+            i_data = i.get("props").get("data")
+            i_data_obj = i_data.get("obj", None)
+            i_data_obj_values = i_data.get("values", None)
+            i_block_id = i.get("id")
+            i_type = i.get("type")
+            if i_data_obj is None:
+                if i_data_obj_values is None:
+                    raise BaseActionException("`obj` or `values` is required")
+                component_class = COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT.get(i_type)
+            
+        return {
+            "success": 1,
+            "data": {
+                "elments": element_page_list,
+            },
+        }
+        
         els_data = []
         for i, element in enumerate(elements):
             mode = element.get("mode")
@@ -232,8 +329,9 @@ class ResourcesPostEditContentActionAPIView(BaseContentEditorActionAPIView):
     available_post_actions = [
         LoadContentAction(),
         SaveContentAction(),
+        LoadDemoLessonDataAction(),
         # HotUpdateComponentAction(),
-        BuildAndPublishPostAction(),
+        BuildAndPublishContentAction(),
         # LoadComponentsDataAction(),
         # ComponentFormSubmitAction(),
         # BaseUploadImageByFileAction(),

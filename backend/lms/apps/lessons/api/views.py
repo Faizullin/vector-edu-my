@@ -3,30 +3,44 @@ from django_filters import CharFilter, NumberFilter
 from django_filters.rest_framework import FilterSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
+from django.db.models import Count
 from api_lessons.models import Lesson, LessonPage, LessonBatch
 from lms.apps.core.utils.api_actions import BaseActionException
 from lms.apps.core.utils.crud_base.views import BaseViewSet
 from lms.apps.posts.models import Post
-from .serializers import LessonSerializer, LessonPageSerializer, \
-    LessonSubmitSerializer, LessonBatchSerializer, LessonPageReorderSubmitSerializer
+from .serializers import (
+    LessonSerializer,
+    LessonPageSerializer,
+    LessonSubmitSerializer,
+    LessonBatchSerializer,
+    LessonPageReorderSubmitSerializer,
+)
 
 
 class LessonsBatchViewSet(BaseViewSet):
-    search_fields = ['title', ]
-    ordering_fields = ['id', ]
+    search_fields = [
+        "title",
+    ]
+    ordering_fields = [
+        "id",
+    ]
 
     class LessonBatchFilter(FilterSet):
-        title = CharFilter(lookup_expr='icontains')
+        title = CharFilter(lookup_expr="icontains")
 
         class Meta:
             model = LessonBatch
-            fields = ['id', 'title', ]
+            fields = [
+                "id",
+                "title",
+            ]
 
     filterset_class = LessonBatchFilter
 
     def get_queryset(self):
-        queryset = LessonBatch.objects.all()
+        queryset = LessonBatch.objects.annotate(
+            lesson_count=Count("lessons")
+        ).prefetch_related("lessons")
         return queryset
 
     def get_serializer_class(self):
@@ -34,16 +48,16 @@ class LessonsBatchViewSet(BaseViewSet):
 
 
 class LessonsLessonViewSet(BaseViewSet):
-    search_fields = ['title', 'description']
-    ordering_fields = ['id', 'order']
+    search_fields = ["title", "description"]
+    ordering_fields = ["id", "order"]
 
     class LessonFilter(FilterSet):
-        title = CharFilter(lookup_expr='icontains')
-        batch_id = NumberFilter(field_name='lesson_batch', lookup_expr='exact')
+        title = CharFilter(lookup_expr="icontains")
+        batch_id = NumberFilter(field_name="lesson_batch", lookup_expr="exact")
 
         class Meta:
             model = Lesson
-            fields = ['id', 'title', 'batch_id']
+            fields = ["id", "title", "batch_id"]
 
     filterset_class = LessonFilter
 
@@ -52,25 +66,31 @@ class LessonsLessonViewSet(BaseViewSet):
 
     def perform_create(self, serializer):
         kwargs = serializer.validated_data
-        kwargs["order"] = Lesson.objects.filter(lesson_batch=kwargs["lesson_batch"]).count() + 1
+        kwargs["order"] = (
+            Lesson.objects.filter(lesson_batch=kwargs["lesson_batch"]).count() + 1
+        )
         return Lesson.objects.create(**kwargs)
 
     def get_serializer_class(self):
         if self.request.method in ["POST", "PUT", "PATCH"]:
             return LessonSubmitSerializer
         return LessonSerializer
+        
 
 
 class LessonsPageViewSet(BaseViewSet):
     search_fields = ["id"]
-    ordering_fields = ['id', 'order']
+    ordering_fields = ["id", "order"]
 
     class LessonPageFilter(FilterSet):
-        lesson_id = NumberFilter(field_name='lesson', lookup_expr='exact')
+        lesson_id = NumberFilter(field_name="lesson", lookup_expr="exact")
 
         class Meta:
             model = LessonPage
-            fields = ['id', 'lesson', ]
+            fields = [
+                "id",
+                "lesson",
+            ]
 
     # filterset_class = LessonPageFilter
 
@@ -85,7 +105,7 @@ class LessonsPageViewSet(BaseViewSet):
         kwargs["order"] = LessonPage.objects.filter(lesson=kwargs["lesson"]).count() + 1
         return LessonPage.objects.create(**kwargs)
 
-    @action(detail=False, methods=['post'], url_path='reorder')
+    @action(detail=False, methods=["post"], url_path="reorder")
     def reorder(self, request):
         serializer = LessonPageReorderSubmitSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -99,33 +119,42 @@ class LessonsPageViewSet(BaseViewSet):
         for order, page_id in enumerate(order_ids):
             found_page_obj = [page for page in lesson_pages if page.id == page_id]
             if not found_page_obj:
-                return Response({"error": f"Page with id {page_id} not found in lesson pages"}, status=400)
+                return Response(
+                    {"error": f"Page with id {page_id} not found in lesson pages"},
+                    status=400,
+                )
             found_page_obj[0].order = order + 1
             obj_list.append(found_page_obj[0])
         for order, obj in enumerate(obj_list):
             obj.save()
         return Response(LessonPageSerializer(obj_list, many=True).data)
 
-    @action(detail=True, methods=['post'], url_path='get-editor')
+    @action(detail=True, methods=["post"], url_path="get-editor")
     def get_editor(self, request, *args, **kwargs):
         lesson_page_obj = self.get_object()
         ctype = ContentType.objects.get_for_model(LessonPage)
         try:
-            post_obj = Post.objects.get(content_type=ctype.id, object_id=lesson_page_obj.id)
+            post_obj = Post.objects.get(
+                content_type=ctype.id, object_id=lesson_page_obj.id
+            )
         except Post.DoesNotExist:
             author = request.user
-            title = f"Post for lesson page [{lesson_page_obj.id}]` #{lesson_page_obj.order}"
+            title = (
+                f"Post for lesson page [{lesson_page_obj.id}]` #{lesson_page_obj.order}"
+            )
             post_obj = Post.objects.create(
                 title=title,
                 author=author,
                 post_type="editor",
                 content_type=ctype,
-                object_id=lesson_page_obj.id
+                object_id=lesson_page_obj.id,
             )
 
-        return Response({
-            "post": {
-                "id": post_obj.id,
-                "title": post_obj.title,
+        return Response(
+            {
+                "post": {
+                    "id": post_obj.id,
+                    "title": post_obj.title,
+                }
             }
-        })
+        )

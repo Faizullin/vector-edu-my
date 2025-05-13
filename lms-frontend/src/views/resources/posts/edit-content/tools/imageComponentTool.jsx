@@ -161,7 +161,7 @@ export class ImageComponentTool extends BaseComponentTool {
       }
       const { file } = extraArgs;
       const formData = new FormData();
-      formData.append('audio_file', file);
+      formData.append('image_file', file);
       actionsApi.actions['hot-update-component'].apply({
         mode: 'edit',
         component_id: self.data.obj.id,

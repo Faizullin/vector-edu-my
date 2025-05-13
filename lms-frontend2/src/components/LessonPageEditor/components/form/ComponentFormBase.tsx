@@ -1,26 +1,30 @@
-import { NiceModalHandler } from '@/components/NiceModal/NiceModal';
-import { Button } from '@/components/ui/button';
-import { toaster } from '@/components/ui/toaster';
-import { Dialog, Portal, Stack } from '@chakra-ui/react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { DefaultValues, FieldValues, useForm, UseFormReturn } from 'react-hook-form';
-import { z, ZodType, ZodTypeDef } from 'zod';
-import { ComponentBase, ComponentId } from '../../types';
+import { NiceModalHandler } from "@/components/NiceModal/NiceModal";
+import { Button } from "@/components/ui/button";
+import { toaster } from "@/components/ui/toaster";
+import { CloseButton, Dialog, Drawer, Portal, Stack } from "@chakra-ui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  DefaultValues,
+  FieldValues,
+  useForm,
+  UseFormReturn,
+} from "react-hook-form";
+import { z, ZodType, ZodTypeDef } from "zod";
+import { ComponentBase, ComponentId } from "../../types";
 
-export type FormMode = 'create' | 'edit' | 'view';
-
+export type FormMode = "create" | "edit" | "view";
 
 export interface ApiService<T extends ComponentBase> {
-  create: (data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>) => Promise<T>;
+  create: (data: Omit<T, "id" | "createdAt" | "updatedAt">) => Promise<T>;
   update: (id: ComponentId, data: Partial<T>) => Promise<T>;
   get: (id: ComponentId) => Promise<T>;
 }
 
 export interface UseComponentFormOptions<
   T extends ComponentBase,
-  TSchema extends ZodType<any, ZodTypeDef, any>
+  TSchema extends ZodType<any, ZodTypeDef, any>,
 > {
   schema: TSchema;
   apiService: ApiService<T>;
@@ -37,12 +41,12 @@ export interface UseComponentFormOptions<
 
 export function useComponentForm<
   T extends ComponentBase,
-  TSchema extends ZodType<any, ZodTypeDef, any>
+  TSchema extends ZodType<any, ZodTypeDef, any>,
 >(options: UseComponentFormOptions<T, TSchema>) {
   const {
     schema,
     apiService,
-    mode: initialMode = 'create',
+    mode: initialMode = "create",
     recordId: initialRecordId,
     defaultValues,
     onSuccess,
@@ -55,7 +59,7 @@ export function useComponentForm<
 
   const [formMode, setFormMode] = useState<FormMode>(initialMode);
   const [recordId, setRecordId] = useState<ComponentId | undefined>(
-    initialRecordId,
+    initialRecordId
   );
 
   const queryClient = useQueryClient();
@@ -63,7 +67,7 @@ export function useComponentForm<
   const form = useForm<z.infer<TSchema>>({
     resolver: zodResolver(schema),
     defaultValues,
-    mode: 'onChange',
+    mode: "onChange",
   });
 
   const baseQueryKey = useMemo(
@@ -72,14 +76,11 @@ export function useComponentForm<
   );
 
   const recordQueryKey = useMemo(
-    () =>
-      recordId
-        ? [...baseQueryKey, recordId]
-        : null,
+    () => (recordId ? [...baseQueryKey, recordId] : null),
     [baseQueryKey, recordId]
   );
 
-  const shouldFetch = formMode === 'edit' && !!recordId;
+  const shouldFetch = formMode === "edit" && !!recordId;
 
   const {
     data: initialData,
@@ -89,76 +90,59 @@ export function useComponentForm<
   } = useQuery({
     queryKey: recordQueryKey || [],
     queryFn: () =>
-      recordId ? apiService.get(recordId) : Promise.reject('No recordId'),
+      recordId ? apiService.get(recordId) : Promise.reject("No recordId"),
     enabled: shouldFetch && !!recordQueryKey,
   });
-
   useEffect(() => {
-    console.log("baseQueryKey", baseQueryKey);
-  }, [baseQueryKey]);
-  useEffect(() => {
-    console.log("recordQueryKey", recordQueryKey);
-  }, [recordQueryKey]);
-
-  useEffect(() => {
-    if(initialMode === 'create' || !initialRecordId) {
+    if (initialMode === "create" || !initialRecordId) {
       form.reset(defaultValues || {});
     }
     setFormMode(initialMode);
     setRecordId(initialRecordId);
   }, [initialMode, initialRecordId]);
-
-
-
-
-
-
   useEffect(() => {
     if (loadError) {
       toaster.create({
-        title: 'Error fetching data',
+        title: "Error fetching data",
         description:
           loadError instanceof Error
             ? loadError.message
-            : 'Unknown error occurred',
-        type: 'error',
+            : "Unknown error occurred",
+        type: "error",
       });
     }
   }, [loadError]);
-
   useEffect(() => {
     if (initialData && shouldFetch) {
       form.reset(transform(initialData));
       onLoadSuccess?.(initialData);
     }
   }, [initialData, form, shouldFetch]);
-
   const createMutation = useMutation({
     mutationFn: (data: z.infer<TSchema>) => {
       const transformed = reverseTransform(data);
       return apiService.create(
-        transformed as Omit<T, 'id' | 'createdAt' | 'updatedAt'>
+        transformed as Omit<T, "id" | "createdAt" | "updatedAt">
       );
     },
     onSuccess: (data) => {
-      toaster.create({ title: 'Created successfully', type: 'success' });
+      toaster.create({ title: "Created successfully", type: "success" });
 
       queryClient.invalidateQueries({ queryKey: baseQueryKey });
 
       if (switchToEditOnCreate) {
-        setFormMode('edit');
+        setFormMode("edit");
         setRecordId(data.id);
         form.reset(transform(data));
         setTimeout(() => refetch(), 0);
       }
-
-      onSuccess?.(data, 'create');
+      onSuccess?.(data, "create");
     },
     onError: (error) => {
       toaster.create({
-        title: 'Error creating',
-        description: error instanceof Error ? error.message : '',
-        type: 'error',
+        title: "Error creating",
+        description: error instanceof Error ? error.message : "",
+        type: "error",
       });
     },
   });
@@ -166,13 +150,13 @@ export function useComponentForm<
   const updateMutation = useMutation({
     mutationFn: (data: z.infer<TSchema>) => {
       if (!recordId && !initialData)
-        throw new Error('Record ID is required for update');
+        throw new Error("Record ID is required for update");
       const id = recordId || (initialData?.id as ComponentId);
       const transformed = reverseTransform(data);
       return apiService.update(id, transformed);
     },
     onSuccess: (data) => {
-      toaster.create({ title: 'Updated successfully', type: 'success' });
+      toaster.create({ title: "Updated successfully", type: "success" });
 
       if (recordQueryKey) {
         queryClient.invalidateQueries({ queryKey: recordQueryKey });
@@ -180,20 +164,20 @@ export function useComponentForm<
         queryClient.invalidateQueries({ queryKey: baseQueryKey });
       }
 
-      onSuccess?.(data, 'edit');
+      onSuccess?.(data, "edit");
     },
     onError: (error) => {
       toaster.create({
-        title: 'Error updating',
-        description: error instanceof Error ? error.message : '',
-        type: 'error',
+        title: "Error updating",
+        description: error instanceof Error ? error.message : "",
+        type: "error",
       });
     },
   });
 
   const handleSubmit = form.handleSubmit(
     (data) => {
-      if (formMode === 'edit') {
+      if (formMode === "edit") {
         updateMutation.mutate(data);
       } else {
         createMutation.mutate(data);
@@ -201,15 +185,15 @@ export function useComponentForm<
     },
     () => {
       toaster.create({
-        title: 'Form validation failed',
-        description: 'Please check the form',
-        type: 'error',
+        title: "Form validation failed",
+        description: "Please check the form",
+        type: "error",
       });
     }
   );
 
   const resetForm = () => {
-    if (initialData && formMode === 'edit') {
+    if (initialData && formMode === "edit") {
       form.reset(transform(initialData));
     } else {
       form.reset(defaultValues || {});
@@ -237,7 +221,7 @@ export function useComponentForm<
 export interface ComponentFormBaseProps<
   T extends ComponentBase,
   TSchema extends ZodType<any, ZodTypeDef, any>,
-  TFieldValues extends FieldValues = z.infer<TSchema>
+  TFieldValues extends FieldValues = z.infer<TSchema>,
 > {
   formHook: ReturnType<typeof useComponentForm<T, TSchema>>;
   title: string;
@@ -247,6 +231,7 @@ export interface ComponentFormBaseProps<
   submitButtonText?: string;
   isFullWidth?: boolean;
   modal: NiceModalHandler;
+  displayType?: "dialog" | "drawer";
 }
 
 /**
@@ -255,7 +240,7 @@ export interface ComponentFormBaseProps<
 export function ComponentFormBase<
   T extends ComponentBase,
   TSchema extends ZodType<any, ZodTypeDef, any> = ZodType<any, ZodTypeDef, any>,
-  TFieldValues extends FieldValues = z.infer<TSchema>
+  TFieldValues extends FieldValues = z.infer<TSchema>,
 >({
   formHook,
   title,
@@ -263,40 +248,47 @@ export function ComponentFormBase<
   submitButtonText,
   showResetButton = false,
   modal,
+  displayType = "dialog",
 }: ComponentFormBaseProps<T, TSchema, TFieldValues>) {
   const { form, formMode, handleSubmit, resetForm, isProcessing } = formHook;
 
   // Determine dynamic button text
   const getSubmitButtonText = () =>
-    submitButtonText || (formMode === 'create' ? 'Create' : 'Update');
+    submitButtonText || (formMode === "create" ? "Create" : "Update");
 
   // Conditionally render view-only or editable form
-  const isViewMode = formMode === 'view';
+  const isViewMode = formMode === "view";
 
   const handleCancel = useCallback(() => {
     form.reset();
     modal.hide();
   }, [form, modal]);
 
-  return (
-    <Dialog.Root open={modal.visible}>
-      <Portal>
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content>
-            <form onSubmit={handleSubmit}>
-              <Dialog.Header>
-                <Dialog.Title>
-                  {isViewMode ? `View ${title}` : formMode === 'create' ? `Create ${title}` : `Edit ${title}`}
-                </Dialog.Title>
-              </Dialog.Header>
-              <Dialog.Body pb="4">
-                <Stack spaceY={2}>
-                  {typeof children === 'function' ? children(form as UseFormReturn<TFieldValues>) : children}
-                </Stack>
-              </Dialog.Body>
-              <Dialog.Footer>
-                <Dialog.ActionTrigger asChild>
+  if (displayType === "drawer") {
+    return (
+      <Drawer.Root open={modal.visible}>
+        <Portal>
+          <Drawer.Backdrop />
+          <Drawer.Positioner>
+            <Drawer.Content>
+              <form onSubmit={handleSubmit}>
+                <Drawer.Header>
+                  <Drawer.Title>
+                    {isViewMode
+                      ? `View ${title}`
+                      : formMode === "create"
+                        ? `Create ${title}`
+                        : `Edit ${title}`}
+                  </Drawer.Title>
+                </Drawer.Header>
+                <Drawer.Body>
+                  <Stack spaceY={2}>
+                    {typeof children === "function"
+                      ? children(form as UseFormReturn<TFieldValues>)
+                      : children}
+                  </Stack>
+                </Drawer.Body>
+                <Drawer.Footer>
                   <Button
                     variant="outline"
                     onClick={handleCancel}
@@ -305,35 +297,93 @@ export function ComponentFormBase<
                   >
                     Cancel
                   </Button>
-                </Dialog.ActionTrigger>
-
-                {showResetButton && !isViewMode && (
-                  <Button
-                    variant="ghost"
-                    onClick={resetForm}
-                    disabled={isProcessing}
-                    size="xs"
-                  >
-                    Reset
-                  </Button>
-                )}
-
-                {!isViewMode && (
                   <Button
                     type="submit"
                     colorScheme="blue"
                     loading={isProcessing}
-                    loadingText={formMode === 'create' ? 'Creating...' : 'Updating...'}
+                    loadingText={
+                      formMode === "create" ? "Creating..." : "Updating..."
+                    }
                     size="xs"
                   >
                     {getSubmitButtonText()}
                   </Button>
-                )}
-              </Dialog.Footer>
-            </form>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Portal>
-    </Dialog.Root>
-  );
+                </Drawer.Footer>
+                <Drawer.CloseTrigger asChild onClick={handleCancel}>
+                  <CloseButton size="xs" />
+                </Drawer.CloseTrigger>
+              </form>
+            </Drawer.Content>
+          </Drawer.Positioner>
+        </Portal>
+      </Drawer.Root>
+    );
+  } else if (displayType === "dialog") {
+    return (
+      <Dialog.Root open={modal.visible}>
+        <Portal>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <form onSubmit={handleSubmit}>
+                <Dialog.Header>
+                  <Dialog.Title>
+                    {isViewMode
+                      ? `View ${title}`
+                      : formMode === "create"
+                        ? `Create ${title}`
+                        : `Edit ${title}`}
+                  </Dialog.Title>
+                </Dialog.Header>
+                <Dialog.Body pb="4">
+                  <Stack spaceY={2}>
+                    {typeof children === "function"
+                      ? children(form as UseFormReturn<TFieldValues>)
+                      : children}
+                  </Stack>
+                </Dialog.Body>
+                <Dialog.Footer>
+                  <Dialog.ActionTrigger asChild>
+                    <Button
+                      variant="outline"
+                      onClick={handleCancel}
+                      disabled={isProcessing}
+                      size="xs"
+                    >
+                      Cancel
+                    </Button>
+                  </Dialog.ActionTrigger>
+
+                  {showResetButton && !isViewMode && (
+                    <Button
+                      variant="ghost"
+                      onClick={resetForm}
+                      disabled={isProcessing}
+                      size="xs"
+                    >
+                      Reset
+                    </Button>
+                  )}
+
+                  {!isViewMode && (
+                    <Button
+                      type="submit"
+                      colorScheme="blue"
+                      loading={isProcessing}
+                      loadingText={
+                        formMode === "create" ? "Creating..." : "Updating..."
+                      }
+                      size="xs"
+                    >
+                      {getSubmitButtonText()}
+                    </Button>
+                  )}
+                </Dialog.Footer>
+              </form>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
+    );
+  }
 }

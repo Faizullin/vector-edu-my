@@ -1,3 +1,5 @@
+import { Log } from "@/utils/log"
+
 export class CancelError extends Error {
   constructor(message: string) {
     super(message)
@@ -112,7 +114,7 @@ export class CancelablePromise<T> implements Promise<T> {
           cancelHandler()
         }
       } catch (error) {
-        console.warn("Cancellation threw an error", error)
+        Log.warn("Cancellation threw an error", error)
         return
       }
     }

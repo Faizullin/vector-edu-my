@@ -1,127 +1,19 @@
+import { LessonDocument } from "@/client/types.gen";
 import { DataTable } from "@/components/DataTable/DataTable";
 import { Button } from "@/components/ui/button";
 import { useResourceTable } from "@/hooks/useResource";
+import { getActionsColumn } from "@/utils/table/getActionsColumn";
 import {
   Container,
   Flex,
-  Heading,
-  IconButton,
-  Menu,
-  Portal
+  Heading
 } from "@chakra-ui/react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ColumnHelper, createColumnHelper, Row } from "@tanstack/react-table";
+import { createColumnHelper } from "@tanstack/react-table";
 import { useCallback, useMemo } from "react";
-import { BsThreeDotsVertical } from "react-icons/bs";
-import { FiPenTool, FiTrash } from "react-icons/fi";
-
-/* ---------- data type ---------- */
-type Lesson = {
-  id: number;
-  title: string;
-  created_at: string;
-  updated_at: string;
-};
 
 
-const col = createColumnHelper<Lesson>();
-
-
-interface ActionColumn<T> {
-  render: ({
-    row,
-    key,
-  }: {
-    row: Row<T>;
-    key?: any;
-  }) => React.ReactNode;
-  displayType: "extra" | "default";
-}
-function getActionsColumn<T>(col: ColumnHelper<T>, conf: {
-  actions?: Array<ActionColumn<T>>;
-  options?: {
-    disableDefaultActions?: boolean;
-    defaultActions?: {
-      edit?: (row: Row<T>) => void;
-      delete?: (row: Row<T>) => void;
-    },
-  } | undefined;
-} | undefined = undefined) {
-  const { actions, options } = conf || {};
-  const defaultActions: ActionColumn<T>[] = [
-    {
-      render: ({ row, key }) => (
-        <IconButton key={key} size="xs" aria-label="actions edit" variant="ghost" onClick={() => options?.defaultActions?.edit?.(row)} color={"blue.500"}>
-          <FiPenTool />
-        </IconButton>
-      ),
-      displayType: "default",
-    },
-    {
-      render: ({ row, key, }) => (
-        <IconButton key={key} size="xs" aria-label="actions destroy" variant="ghost" onClick={() => options?.defaultActions?.delete?.(row)} color={"red.500"}>
-          <FiTrash />
-        </IconButton>
-      ),
-      displayType: "default",
-    },
-  ];
-  const actionsList = (options?.disableDefaultActions ? (actions || []) : [...(actions || []), ...defaultActions]).filter((action) => {
-    return action.displayType === "default";
-  });
-  const extraActionsList = (actions || []).filter((action) => {
-    return action.displayType === "extra";
-  });
-  return col.display({
-    id: "actions",
-    header: "Actions",
-    cell: ({ row }) => {
-      return (
-        <>
-          {
-            actionsList.map((action, index) => {
-              const { render } = action;
-              return render({
-                row: row,
-                key: `actions-${row.id}-${index}`,
-              });
-            })
-          }
-          {
-            extraActionsList.length > 0 && (
-              <Menu.Root>
-                <Menu.Trigger asChild>
-                  <IconButton variant="outline" size={"sm"}>
-                    <BsThreeDotsVertical />
-                  </IconButton>
-                </Menu.Trigger>
-                <Portal>
-                  <Menu.Positioner>
-                    <Menu.Content>
-                      {
-                        extraActionsList.map((action, index) => {
-                          const { render } = action;
-                          const el = render({
-                            row: row,
-                          });
-                          return (
-                            <Menu.Item key={`actions-${row.id}-${index}`} value="action-${index}" asChild>
-                              {el}
-                            </Menu.Item>
-                          );
-                        })
-                      }
-                    </Menu.Content>
-                  </Menu.Positioner>
-                </Portal>
-              </Menu.Root>
-            )
-          }
-        </>
-      );
-    },
-  });
-}
+const col = createColumnHelper<LessonDocument>();
 
 export const Route = createFileRoute("/_layout/lessons/")({
   component: () => {
@@ -134,7 +26,6 @@ export const Route = createFileRoute("/_layout/lessons/")({
           col.accessor("id", {
             header: "ID",
             enableSorting: true,
-
             meta: {
               filter: {
                 key: "id",
@@ -143,7 +34,7 @@ export const Route = createFileRoute("/_layout/lessons/")({
             },
           }),
           col.accessor("title", {
-            header: "Lessonname",
+            header: "Title",
             enableSorting: false,
             meta: {
               filter: {
@@ -152,18 +43,7 @@ export const Route = createFileRoute("/_layout/lessons/")({
               }
             }
           }),
-          col.accessor("created_at", {
-            header: "Created At",
-            cell: ({ getValue }) => {
-              const date = new Date(getValue() as string);
-              return date.toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-              });
-            },
-          }),
-          getActionsColumn<Lesson>(col, {
+          getActionsColumn<LessonDocument>({
             actions: [
               {
                 render: ({ row, key }) => (
@@ -182,13 +62,14 @@ export const Route = createFileRoute("/_layout/lessons/")({
               },
             ],
             options: {
-              disableDefaultActions: true,
-            },
+              defaultActions: {
+              }
+            }
           }),
         ];
         return cols;
       }, [])
-    const tableData = useResourceTable<Lesson>({
+    const tableData = useResourceTable<LessonDocument>({
       endpoint: url,
       routeId: Route.id,
       makeColumns: makeColumns,
@@ -212,7 +93,7 @@ export const Route = createFileRoute("/_layout/lessons/")({
           </Button>
         </Flex>
 
-        <DataTable<Lesson>
+        <DataTable<LessonDocument>
           data={tableData.data}
           loading={tableData.loading}
           columns={tableData.columns}
@@ -251,7 +132,8 @@ export const Route = createFileRoute("/_layout/lessons/")({
                 ? updaterOrValue(prev.sortBy)
                 : updaterOrValue,
             }))
-          }} />
+          }}
+        />
       </Container>
     )
   }

@@ -26,6 +26,9 @@ User = get_user_model()
 class IndexView(BaseNavsViewMixin, TemplateView):
 
     def get_template_names(self):
+        return [
+                "lms/index.html",
+            ]
         if self.request.user.is_staff:
             return [
                 "lms/index.html",

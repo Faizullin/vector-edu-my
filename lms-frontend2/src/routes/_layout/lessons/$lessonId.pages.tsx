@@ -1,5 +1,8 @@
 import { simpleRequest } from '@/client/core/simpleRequest';
+import { DocumentId, LessonPageDocument } from '@/client/types.gen';
+import DeleteConfirmNiceDialog from '@/components/DataTable/DeleteConfirmNiceDialog';
 import TableHeader from '@/components/DataTable/TableHeader';
+import NiceModal from '@/components/NiceModal/NiceModal';
 import { Button } from '@/components/ui/button';
 import useFormChangeState from '@/hooks/useFormChangeState';
 import { getActionsColumn } from '@/utils/table/getActionsColumn';
@@ -14,13 +17,6 @@ import { ColumnDef, flexRender, getCoreRowModel, Row, useReactTable } from '@tan
 import { CSSProperties, useCallback, useEffect, useMemo, useState } from 'react';
 import { FiMenu } from 'react-icons/fi';
 
-interface LessonPage {
-  id: number;
-  order: number;
-  lesson: number;
-  created_at: string;
-  updated_at: string;
-}
 
 export const Route = createFileRoute('/_layout/lessons/$lessonId/pages')({
   component: RouteComponent,
@@ -39,7 +35,7 @@ const RowDragHandleCell = ({ rowId }: { rowId: string }) => {
     </button>
   )
 }
-const DraggableRow = ({ row, loading }: { row: Row<LessonPage>, loading: boolean }) => {
+const DraggableRow = ({ row, loading }: { row: Row<LessonPageDocument>, loading: boolean }) => {
   const { transform, transition, setNodeRef, isDragging } = useSortable({
     id: `${row.original.id}`,
   })
@@ -89,7 +85,19 @@ function RouteComponent() {
       });
     },
   });
-  const columns = useMemo<ColumnDef<LessonPage>[]>(() => {
+  const deleteMutation = useMutation({
+    mutationFn: (id: DocumentId) => {
+      return simpleRequest({
+        url: `/lessons/pages/${id}/`,
+        method: "DELETE",
+      })
+    },
+    mutationKey: ["deleteLessonPage"],
+    onSuccess: () => {
+      pagesQuery.refetch();
+    }
+  });
+  const columns = useMemo<ColumnDef<LessonPageDocument>[]>(() => {
     return [
       {
         id: 'drag-handle',
@@ -101,25 +109,13 @@ function RouteComponent() {
         accessorKey: 'id',
         header: 'ID',
         enableSorting: false,
-        // meta: {
-        //   filter: {
-        //     key: 'id',
-        //     variant: 'text',
-        //   }
-        // }
       },
       {
         accessorKey: 'order',
         header: 'Order',
         enableSorting: false,
-        // meta: {
-        //   filter: {
-        //     key: 'order',
-        //     variant: 'text',
-        //   }
-        // }
       },
-      getActionsColumn<LessonPage>({
+      getActionsColumn<LessonPageDocument>({
         actions: [
           {
             render: ({
@@ -142,11 +138,25 @@ function RouteComponent() {
             ),
             displayType: "extra",
           },
-        ]
+        ],
+        options: {
+          defaultActions: {
+            delete: (row) => {
+              NiceModal.show(DeleteConfirmNiceDialog, {
+                title: "Delete Lesson Page",
+                message: "Are you sure you want to delete this lesson page?",
+              }).then((result) => {
+                if (result) {
+                  deleteMutation.mutate(row.original.id);
+                }
+              });
+            }
+          }
+        },
       })
     ];
   }, [openPostEditorMutation, navigate]);
-  const pagesQuery = useQuery<LessonPage[]>({
+  const pagesQuery = useQuery<LessonPageDocument[]>({
     queryKey: ['lesson', lessonId, 'pages'],
     queryFn: () => simpleRequest({
       url: `/lessons/pages/`,
@@ -158,8 +168,8 @@ function RouteComponent() {
       },
     }),
   });
-  const [data, setData] = useState<LessonPage[]>([]);
-  const table = useReactTable<LessonPage>({
+  const [data, setData] = useState<LessonPageDocument[]>([]);
+  const table = useReactTable<LessonPageDocument>({
     data: data,
     columns: columns,
     getCoreRowModel: getCoreRowModel(),

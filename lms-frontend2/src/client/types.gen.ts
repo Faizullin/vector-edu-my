@@ -1,4 +1,4 @@
-import { Row, SortingState } from "@tanstack/react-table"
+import { AccessorColumnDef, ColumnDef, DisplayColumnDef, Row, SortingState } from "@tanstack/react-table"
 
 export type AuthUser = {
     email: string
@@ -28,7 +28,7 @@ export type MakeColumnsFn<T> = (helpers: {
         defaultEdit?: (row: Row<T>) => void;
         defaultDelete?: (row: Row<T>) => void;
     }
-}) => Array<any>;
+}) => Array<ColumnDef<T> | AccessorColumnDef<T, any> | DisplayColumnDef<T>>;
 
 
 export type DocumentId = number;
@@ -60,6 +60,8 @@ export interface UserDocument extends DocumentBase {
     is_superuser: boolean;
     full_name: string | null;
     first_name: string | null;
+    is_paid?: boolean;
+    user_type?: "free" | "paid" | "premium_paid";
 }
 export interface LessonDocument extends DocumentBase {
     title: string;

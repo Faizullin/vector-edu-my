@@ -44,3 +44,50 @@ export const ImportButton = <T,>(props: ImportButtonProps<T>) => {
         </Components.Generic.Menu.Item>
     );
 }
+
+export const AttachStaticImportButton = <T,>(props: ImportButtonProps<T>) => {
+    const Components = useComponentsContext()!;
+    const editor = useBlockNoteEditor()
+    return (
+        <Components.Generic.Menu.Item
+            onClick={() => {
+                NiceModal.show<ShowProps<T>>("component-import-dialog", props.dialogProps).then(({ modal, result }) => {
+                    if (result) {
+                        modal.hide();
+                        const tmp = props.parseUpdateBlock?.(result) || {};
+                        editor.updateBlock(props.block.id, {
+                            props: {
+                                data: {
+                                    obj: result.record,
+                                    staticNotEditable: true,
+                                }
+                            },
+                            ...tmp,
+                        });
+                    }
+                });
+            }}>
+            Attach Static
+        </Components.Generic.Menu.Item>
+    );
+}
+
+export const DetachObjectButton = <T,>(props: ImportButtonProps<T>) => {
+    const Components = useComponentsContext()!;
+    const editor = useBlockNoteEditor()
+    return (
+        <Components.Generic.Menu.Item
+            onClick={() => {
+                editor.updateBlock(props.block.id, {
+                    props: {
+                        data: {
+                            obj: null,
+                            staticNotEditable: false,
+                        }
+                    } as any,
+                });
+            }}>
+            Detach Object
+        </Components.Generic.Menu.Item>
+    );
+}

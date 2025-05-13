@@ -5,7 +5,7 @@ COMPONENT_NAME_TO_ELEMENT_FIELD_NAME_DICT = {
     "matching": "matching_component",
     "audio": "audio_component",
     "question": "question_component",
-    "blue-card": "blue_card_component",
+    "bluecard": "blue_card_component",
     "fill-text": "fill_text_component",
     "video": "video_component",
     "record-audio": "record_audio_component",
@@ -16,7 +16,7 @@ COMPONENT_NAME_TO_ELEMENT_FIELD_NAME_DICT = {
 
 COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT = {
     "question": QuestionComponent,
-    "blue-card": BlueCardComponent,
+    "bluecard": BlueCardComponent,
     "audio": AudioComponent,
     "fill-text": FillTextComponent,
     "video": VideoComponent,

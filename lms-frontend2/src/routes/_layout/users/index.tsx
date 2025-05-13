@@ -6,15 +6,18 @@ import { Button } from "@/components/ui/button";
 import { useResourceTable } from "@/hooks/useResource";
 import { getActionsColumn } from "@/utils/table/getActionsColumn";
 import {
+  Badge,
   Container,
   Flex,
-  Heading
+  Heading,
+  Menu,
+  Portal
 } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { createColumnHelper } from "@tanstack/react-table";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 
-const col = createColumnHelper<UserDocument>();
+const col = createColumnHelper<any>();
 
 export const Route = createFileRoute("/_layout/users/")({
   component: () => {
@@ -54,6 +57,39 @@ export const Route = createFileRoute("/_layout/users/")({
               }
             }
           }),
+          col.accessor("user_type", {
+            header: "Payment",
+            enableSorting: false,
+            cell: ({ getValue }) => {
+              const colorScheme = {
+                free: "blue",
+                paid: "green",
+                premium_paid: "purple",
+              }
+              const value = getValue();
+              return (
+                <Badge
+                  colorPalette={colorScheme[value as keyof typeof colorScheme]}
+                  variant="solid"
+                  fontSize="xs"
+                  textTransform="capitalize"
+                >
+                  {value}
+                </Badge>
+              )
+            },
+            meta: {
+              filter: {
+                key: "user_type",
+                variant: "select",
+                selectOptions: [
+                  { label: "Бесплатный", value: "free" },
+                  { label: "Оплаченный", value: "paid" },
+                  { label: "Премиум оплаченный", value: "premium_paid" }
+                ],
+              }
+            }
+          }),
           col.accessor("first_name", {
             header: "First Name",
             enableSorting: false,
@@ -85,42 +121,26 @@ export const Route = createFileRoute("/_layout/users/")({
                 },
                 displayType: "extra",
               },
-              {
-                render: ({ row }) => {
-                  return (
-                    <Button
-                      size="xs"
-                      variant="ghost"
-                      onClick={() => {
-                        console.log(row);
-                      }}
-                    >
-                      Delete
-                    </Button>
-                  );
-                },
-                displayType: "extra",
-              }
             ],
             options: {
               defaultActions: {
-                edit: (row) => {
-                  console.log(row);
-                },
-                delete: (row) => {
-                  console.log(row);
-                }
               }
             }
           }),
         ];
         return cols;
       }, [])
-    const tableData = useResourceTable<UserDocument>({
+    const tableData = useResourceTable<any>({
       endpoint: url,
       routeId: Route.id,
       makeColumns: makeColumns,
     });
+    const [rowSelection, setRowSelection] = useState({})
+    const actionRowSelection = useMemo(() => {
+      return {
+        length: Object.keys(rowSelection).length,
+      }
+    }, [rowSelection])
     return (
       <Container maxW="full" py={12}>
         <Flex
@@ -129,18 +149,25 @@ export const Route = createFileRoute("/_layout/users/")({
           <Heading size="lg">
             Users Management
           </Heading>
-          {/* <Button
-            ml="auto"
-            size="sm"
-            variant="solid"
-          // onClick={handleAddPage}
-          // disabled={addPageMutation.isPending}
-          >
-            Add
-          </Button> */}
+          <Menu.Root size={"sm"} onSelect={console.log}>
+            <Menu.Trigger asChild>
+              <Button variant="solid" size="xs" ml={"auto"}>
+                Actions
+              </Button>
+            </Menu.Trigger>
+            <Portal>
+              <Menu.Positioner>
+                <Menu.Content>
+                  <Menu.Item value="switch-payment" disabled={actionRowSelection.length === 0}>
+                    Swicth payment
+                  </Menu.Item>
+                </Menu.Content>
+              </Menu.Positioner>
+            </Portal>
+          </Menu.Root>
         </Flex>
 
-        <DataTable<UserDocument>
+        <DataTable
           data={tableData.data}
           loading={tableData.loading}
           columns={tableData.columns}
@@ -179,7 +206,15 @@ export const Route = createFileRoute("/_layout/users/")({
                 ? updaterOrValue(prev.sortBy)
                 : updaterOrValue,
             }))
-          }} />
+          }}
+          reactTableProps={{
+            state: {
+              rowSelection,
+            },
+            enableRowSelection: true,
+            onRowSelectionChange: setRowSelection,
+          }}
+        />
       </Container>
     )
   }

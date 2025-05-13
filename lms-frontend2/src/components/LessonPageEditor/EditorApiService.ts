@@ -1,20 +1,25 @@
 import { simpleRequest } from "@/client/core/simpleRequest";
-import { PaginatedData } from "@/client/types.gen";
+import { DocumentId, LessonPageDocument, PaginatedData } from "@/client/types.gen";
 import { ComponentId } from "./types";
+
+type ActionResult<T> = {
+    success: boolean;
+    data: T;
+}
 
 export class EditorApiService {
     static baseActionUrl = `/resources/posts/edit-content/lessons2/action`
-    static saveContent(postId: string, content: string): Promise<void> {
+    static saveContent(postId: string, content: string) {
         return this.submitAction("save-content", {
             post_id: postId,
             content,
         })
     }
-    static submitAction(
+    static submitAction<T = any,>(
         action: string,
         formData: {
             post_id: string
-        } & any): Promise<void> {
+        } & any): Promise<ActionResult<T>> {
         return simpleRequest({
             method: "POST",
             url: `${this.baseActionUrl}`,
@@ -24,7 +29,7 @@ export class EditorApiService {
             }
         })
     }
-    static loadContent(postId: string): Promise<any> {
+    static loadContent(postId: string) {
         return this.submitAction("load-content", {
             post_id: postId,
         })
@@ -49,18 +54,37 @@ export class EditorApiService {
             query: params,
         });
     }
-    static createComponent<T,>(type: string, data: Record<string, any>): Promise<T> {
+    static createComponent<T,>(type: string, data: Record<string, any>, options = {
+        mediaType: "application/json",
+    }): Promise<T> {
         return simpleRequest<T>({
             method: "POST",
             url: `/resources/component/${type}/`,
             formData: data,
+            mediaType: options.mediaType,
         });
     }
-    static updateComponent<T,>(type: string, id: ComponentId, data: Record<string, any>): Promise<T> {
+    static updateComponent<T,>(type: string, id: ComponentId, data: Record<string, any>, options = {
+        mediaType: "application/json",
+    }): Promise<T> {
         return simpleRequest<T>({
             method: "PUT",
             url: `/resources/component/${type}/${id}/`,
             formData: data,
+            mediaType: options.mediaType,
         });
+    }
+    static publishContent(postId: string, content: string) {
+        return this.submitAction("build-and-publish-content", {
+            post_id: postId,
+            content,
+        })
+    }
+    static fetchLoadDemoLessonData(post_id: DocumentId) {
+        return this.submitAction<{
+            lesson_page: LessonPageDocument;
+        }>("load-demo-lesson-data", {
+            post_id,
+        })
     }
 }

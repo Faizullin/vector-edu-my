@@ -2,83 +2,19 @@ import { PostDocument } from "@/client/types.gen";
 import { DataTable, } from "@/components/DataTable/DataTable";
 import { Button } from "@/components/ui/button";
 import { useResourceTable } from "@/hooks/useResource";
+import { getActionsColumn } from "@/utils/table/getActionsColumn";
 import {
   Link as ChakraLink,
   Container,
   Flex,
   Heading,
-  IconButton,
 } from "@chakra-ui/react";
-import { createFileRoute, Link as RouterLink } from "@tanstack/react-router";
-import { ColumnHelper, createColumnHelper, Row } from "@tanstack/react-table";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { createColumnHelper } from "@tanstack/react-table";
 import { useCallback, useMemo } from "react";
-import { FiPenTool, FiTrash } from "react-icons/fi";
-
-/* ---------- data type ---------- */
 
 
 const col = createColumnHelper<PostDocument>();
-
-
-interface ActionColumn<T> {
-  render: ({
-    row,
-    key,
-  }: {
-    row: Row<T>;
-    key: any;
-  }) => React.ReactNode;
-  displayType: "extra" | "default";
-}
-function getActionsColumn<T>(col: ColumnHelper<T>, conf: {
-  actions?: Array<ActionColumn<T>>;
-  options?: {
-    disableDefaultActions?: boolean;
-    defaultActions?: {
-      edit?: (row: Row<T>) => void;
-      delete?: (row: Row<T>) => void;
-    },
-  } | undefined;
-} | undefined = undefined) {
-  const { actions, options } = conf || {};
-  const defaultActions: ActionColumn<T>[] = [
-    {
-      render: ({ row, key }) => (
-        <IconButton key={key} size="xs" aria-label="actions edit" variant="ghost" onClick={() => options?.defaultActions?.edit?.(row)} color={"blue.500"}>
-          <FiPenTool />
-        </IconButton>
-      ),
-      displayType: "default",
-    },
-    {
-      render: ({ row, key, }) => (
-        <IconButton key={key} size="xs" aria-label="actions destroy" variant="ghost" onClick={() => options?.defaultActions?.delete?.(row)} color={"red.500"}>
-          <FiTrash />
-        </IconButton>
-      ),
-      displayType: "default",
-    },
-  ];
-  const actionsList = options?.disableDefaultActions ? (actions || []) : [...(actions || []), ...defaultActions];
-  return col.display({
-    id: "actions",
-    header: "Actions",
-    cell: ({ row }) => {
-      return (
-        <>
-          {
-            actionsList.map((action, index) => {
-              const { render } = action;
-              return render({
-                row: row,
-                key: `actions-${row.id}-${index}`,
-              });
-            })
-          }</>
-      );
-    },
-  });
-}
 
 export const Route = createFileRoute("/_layout/resources/posts/")({
   component: () => {
@@ -91,7 +27,6 @@ export const Route = createFileRoute("/_layout/resources/posts/")({
           col.accessor("id", {
             header: "ID",
             enableSorting: true,
-
             meta: {
               filter: {
                 key: "id",
@@ -121,11 +56,11 @@ export const Route = createFileRoute("/_layout/resources/posts/")({
                   _hover={{ textDecor: "underline" }}
                   asChild
                 >
-                  <RouterLink
+                  <Link
                     to={`/users`}
                     search={{ id: id }}>
                     {username}
-                  </RouterLink>
+                  </Link>
                 </ChakraLink>
               );
             },
@@ -174,7 +109,7 @@ export const Route = createFileRoute("/_layout/resources/posts/")({
               });
             },
           }),
-          getActionsColumn<PostDocument>(col, {
+          getActionsColumn<PostDocument>({
             options: {
               defaultActions: {
                 edit: (row) => {
@@ -213,7 +148,7 @@ export const Route = createFileRoute("/_layout/resources/posts/")({
           </Button>
         </Flex>
 
-        <DataTable
+        <DataTable<PostDocument>
           data={tableData.data}
           loading={tableData.loading}
           columns={tableData.columns}
