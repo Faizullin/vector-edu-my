@@ -39,7 +39,7 @@ export type FieldItem = {
   label: string;
   value: string;
 };
-export type MyColumnMeta<T> = {
+export type MyColumnMeta = {
   filter?: (
     | {
         type: "text";
@@ -47,11 +47,21 @@ export type MyColumnMeta<T> = {
     | {
         type: "select";
         options: Array<FieldItem>;
+        query?: {
+          fetchOptionsUrl: string;
+          transformResponse: (data: any) => Array<FieldItem>;
+          key: string[];
+          paginated?: boolean;
+        };
+        multi?: boolean;
       }
     | {
         type: "select-async";
-        fetchOptionsUrl?: string;
-        transformResponse?: (data: T[]) => Array<FieldItem>;
+        query?: {
+          fetchOptionsUrl: string;
+          transformResponse: (data: any) => Array<FieldItem>;
+          key: string[];
+        };
       }
   ) & {
     displayType?: "toolbar" | "column";

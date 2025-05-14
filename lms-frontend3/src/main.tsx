@@ -52,5 +52,5 @@ createRoot(document.getElementById("root")!).render(
         </FontProvider>
       </ThemeProvider>
     </QueryClientProvider>
-  </StrictMode>,
+  </StrictMode>
 );

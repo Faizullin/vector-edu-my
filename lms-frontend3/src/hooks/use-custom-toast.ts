@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { showToast } from "@/utils/handle-server-error";
 
 export const useCustomToast = () => {
   const showSuccessToast = (
@@ -8,15 +8,18 @@ export const useCustomToast = () => {
           title: string;
           description?: string;
           duration?: number;
-        },
+        }
   ) => {
     const toastData =
       typeof data === "string"
         ? { title: "Success!", description: data }
         : data;
-    toast.message(toastData.title, {
-      description: toastData.description,
-      duration: toastData.duration,
+    showToast("error", {
+      message: toastData.title,
+      data: {
+        description: toastData.description,
+        duration: toastData.duration,
+      },
     });
   };
 
@@ -27,15 +30,18 @@ export const useCustomToast = () => {
           title: string;
           description?: string;
           duration?: number;
-        },
+        }
   ) => {
     const toastData =
       typeof data === "string"
         ? { title: "Something went wrong!", description: data }
         : data;
-    toast.error(toastData.title, {
-      description: toastData.description,
-      duration: toastData.duration,
+    showToast("error", {
+      message: toastData.title,
+      data: {
+        description: toastData.description,
+        duration: toastData.duration,
+      },
     });
   };
 

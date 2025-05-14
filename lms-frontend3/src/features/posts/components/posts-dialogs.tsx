@@ -81,15 +81,15 @@ export const PostEditNiceDialog = NiceModal.create<
       formHook={formHook}
       modal={modal}
       displayType="dialog"
-      getTitle={(formMode) =>
-        formMode === "edit" ? "Edit Post" : "Create Post"
+      getTitle={(hook: any) =>
+        hook.formMode === "edit" ? "Edit Post" : "Create Post"
       }
       formName="posts-form"
     >
       {({ control }) => {
         return (
           <Form {...formHook.form}>
-            <div className="space-y-4 p-0.5">
+            <div className="space-y-4 p-0.5 mb-6">
               <FormField
                 control={control}
                 name="title"

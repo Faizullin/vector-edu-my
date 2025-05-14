@@ -1,7 +1,6 @@
 import type { DocumentBase } from "@/client";
 import type { DatatableProps } from "@/components/datatable";
 import { DataTableColumnHeader } from "@/components/datatable/data-table-column-header";
-import { DataTableToolbar } from "@/components/datatable/data-table-toolbar";
 import {
   Table,
   TableBody,
@@ -46,14 +45,14 @@ export function DndDatatable<T extends DocumentBase>({
 
   const dataIds = useMemo<UniqueIdentifier[]>(
     () => resource.data?.map(({ id }) => `${id}`),
-    [resource.data],
+    [resource.data]
   );
 
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    }),
+    })
   );
 
   // Handle drag end event
@@ -75,7 +74,7 @@ export function DndDatatable<T extends DocumentBase>({
 
   return (
     <div className="space-y-4">
-      <DataTableToolbar table={datatable.table} />
+      {/* <DataTableToolbar table={datatable.table} /> */}
       <div className="rounded-md border">
         <DndContext
           sensors={sensors}
@@ -93,10 +92,10 @@ export function DndDatatable<T extends DocumentBase>({
                           ? cn(
                               "drop-shadow-[0_1px_2px_rgb(0_0_0_/_0.1)] dark:drop-shadow-[0_1px_2px_rgb(255_255_255_/_0.1)] lg:drop-shadow-none",
                               "bg-background transition-colors duration-200 group-hover/row:bg-muted group-data-[state=selected]/row:bg-muted",
-                              "sticky left-6 md:table-cell",
+                              "sticky left-6 md:table-cell"
                             )
                           : "",
-                        header.column.columnDef.meta?.className || "",
+                        header.column.columnDef.meta?.className || ""
                       );
                     }, [header.column.columnDef.meta]);
                     return (
@@ -113,7 +112,7 @@ export function DndDatatable<T extends DocumentBase>({
                         ) : (
                           flexRender(
                             header.column.columnDef.header,
-                            header.getContext(),
+                            header.getContext()
                           )
                         )}
                       </TableHead>
@@ -184,10 +183,10 @@ function DraggableRow<T extends DocumentBase>({ row }: { row: Row<T> }) {
             ? cn(
                 "drop-shadow-[0_1px_2px_rgb(0_0_0_/_0.1)] dark:drop-shadow-[0_1px_2px_rgb(255_255_255_/_0.1)] lg:drop-shadow-none",
                 "bg-background transition-colors duration-200 group-hover/row:bg-muted group-data-[state=selected]/row:bg-muted",
-                "sticky left-6 md:table-cell",
+                "sticky left-6 md:table-cell"
               )
             : "",
-          cell.column.columnDef.meta?.className || "",
+          cell.column.columnDef.meta?.className || ""
         );
         return (
           <TableCell key={cell.id} className={classes}>

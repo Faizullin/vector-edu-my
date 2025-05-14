@@ -3,11 +3,12 @@ from api_lessons.models.lesson import Lesson
 from api_users.models import UserTypes
 from django_filters import CharFilter
 from django_filters.rest_framework import FilterSet
+from lms.apps.core.utils.exceptions import StandardizedViewMixin
 from rest_framework.permissions import IsAdminUser
 from django.contrib.auth import login, logout
 from rest_framework import generics, permissions, status
 
-from lms.apps.core.utils.crud_base.views import BaseViewSet
+from lms.apps.core.utils.crud_base.views import BaseApiView, BaseApiViewSet
 from .serializers import (
     LessonUserPermSerializer,
     UserSerializer,
@@ -22,7 +23,7 @@ from rest_framework.decorators import action
 User = get_user_model()
 
 
-class UserViewSet(BaseViewSet):
+class UserViewSet(BaseApiViewSet):
     search_fields = ["username", "email"]
     ordering_fields = [
         "id",
@@ -30,6 +31,7 @@ class UserViewSet(BaseViewSet):
 
     class UserFilter(FilterSet):
         username = CharFilter(lookup_expr="icontains")
+        email = CharFilter(lookup_expr="icontains")
 
         class Meta:
             model = User
@@ -101,7 +103,7 @@ class UserViewSet(BaseViewSet):
     #         self.permission_classes = default_perms + [IsAdminUser]
 
 
-class LoginView(APIView):
+class LoginView(StandardizedViewMixin, APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
@@ -112,23 +114,13 @@ class LoginView(APIView):
         return Response(UserMeSerializer(user).data)
 
 
-class LogoutView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [
-        SessionAuthentication,
-    ]
-
+class LogoutView(BaseApiView):
     def post(self, request):
         logout(request)  # clears session
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class UserMeView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [
-        SessionAuthentication,
-    ]
-
+class UserMeView(BaseApiView):
     def get(self, request):
         user = request.user
         serializer = UserMeSerializer(user)
@@ -140,33 +132,3 @@ class UserMeView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-
-
-# class LessonUserPermissionsView(BaseViewSet):
-
-#     class LessonUserFilter(FilterSet):
-#         # user_id = NumberFilter(field_name="lesson", lookup_expr="exact")
-#         title = CharFilter(lookup_expr='icontains')
-
-#         class Meta:
-#             model = Lesson
-#             fields = ["id", "title", "user"]
-
-#     filterset_class = LessonUserFilter
-
-#     # def get_queryset(self):
-#     #     queryset = Lesson.objects.all()
-#     #     return queryset
-
-#     def get_serializer_class(self):
-#         return LessonUserPermSerializer
-
-#     def get_queryset(self):
-#         queryset = Lesson.objects.all()
-#         # get user from request user_id as required key
-#         # impement logic to get all lessons where is_available_on_free = True or user.is_paid() = True
-
-#         queryset = queryset.filter(
-#             user=self.request.user, is_available_on_free=True
-#         ) | queryset.filter(user=self.request.user, user__is_paid=True)
-#         return queryset

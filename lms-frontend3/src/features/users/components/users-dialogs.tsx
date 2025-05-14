@@ -1,8 +1,8 @@
 import type { DocumentId } from "@/client";
+import { simpleRequest } from "@/client/core/simpleRequest";
 import {
   ComponentFormBase,
-  createDefaultApiService,
-  useComponentBaseForm,
+  useComponentSimpleForm,
 } from "@/components/form/component-base";
 import NiceModal, {
   type NiceModalHocPropsExtended,
@@ -30,20 +30,37 @@ export const UserToggleStatusNiceDialog = NiceModal.create<
   NiceModalHocPropsExtended<{ userIds: DocumentId[] }>
 >(({ userIds }) => {
   const modal = NiceModal.useModal();
-  const formMode = "create";
   const { showSuccessToast, showErrorToast } = useCustomToast();
 
-  const formHook = useComponentBaseForm<UserDocument, typeof formSchema>({
+  // const formHook = useComponentBaseForm<UserDocument, typeof formSchema>({
+  //   schema: formSchema,
+  //   apiService: createDefaultApiService<UserDocument>({
+  //     url: `/accounts/users/toggle-user-type`,
+  //   }),
+  //   queryKey: "users/toggle-user-type",
+  //   invalidateQueriesOnMutate: true,
+  //   switchToEditOnCreate: false,
+  //   resetOnModeChange: false,
+  //   initialMode: formMode,
+  //   recordId: null,
+  //   defaultValues: {
+  //     user_type: null,
+  //   },
+  //   notifications: {
+  //     onSuccess: (title) => showSuccessToast({ title }),
+  //     onError: (title, errorMsg) =>
+  //       showErrorToast({ title, description: errorMsg }),
+  //   },
+  //   transformToApi(formData) {
+  //     return {
+  //       user_ids: userIds,
+  //       user_type: formData.user_type,
+  //     };
+  //   },
+  // });
+
+  const formHook = useComponentSimpleForm<UserDocument, typeof formSchema>({
     schema: formSchema,
-    apiService: createDefaultApiService<UserDocument>({
-      url: `/accounts/users/toggle-user-type`,
-    }),
-    queryKey: "users/toggle-user-type",
-    invalidateQueriesOnMutate: true,
-    switchToEditOnCreate: false,
-    resetOnModeChange: false,
-    initialMode: formMode,
-    recordId: null,
     defaultValues: {
       user_type: null,
     },
@@ -58,6 +75,15 @@ export const UserToggleStatusNiceDialog = NiceModal.create<
         user_type: formData.user_type,
       };
     },
+    fetchFn: (_): Promise<any> =>
+      simpleRequest({
+        url: `/accounts/users/toggle-user-type/`,
+        method: "POST",
+        formData: {
+          user_ids: userIds,
+          user_type: formHook.form.getValues("user_type"),
+        },
+      }),
   });
 
   return (
@@ -71,7 +97,7 @@ export const UserToggleStatusNiceDialog = NiceModal.create<
     >
       {({ control }) => (
         <Form {...formHook.form}>
-          <div className="space-y-4 p-0.5">
+          <div className="space-y-4 p-0.5 mb-6">
             <FormField
               control={control}
               name="user_type"

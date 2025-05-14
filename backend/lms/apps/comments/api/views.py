@@ -3,7 +3,7 @@ from django_filters.rest_framework import FilterSet
 from rest_framework import serializers
 
 from lms.apps.comments.models import Comment
-from lms.apps.core.utils.crud_base.views import BaseViewSet
+from lms.apps.core.utils.crud_base.views import BaseApiViewSet
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -22,7 +22,7 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
-class CommentViewSet(BaseViewSet):
+class CommentViewSet(BaseApiViewSet):
     search_fields = ['user_name',]
     ordering_fields = ['id', ]
     ordering = ['-id']

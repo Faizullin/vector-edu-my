@@ -1,52 +1,52 @@
+import path from "path";
+import { defineConfig, loadEnv } from "vite";
+import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
-import react from "@vitejs/plugin-react";
-import { config } from "dotenv";
-import path from "path";
-import { defineConfig } from "vite";
 
-const configOuput = config().parsed!;
+// Helper: proxy map for Django backend
 const getProxyUrlsDict = () => {
   const urls = ["/api", "/admin", "/lms/auth", "/static", "/protected"];
-  const data: any = {};
+  const data: Record<string, any> = {};
   urls.forEach((url) => {
     data[url] = {
-      target: "http://127.0.0.1:8000", // Django server
+      target: "http://127.0.0.1:8000",
       changeOrigin: true,
       secure: false,
     };
   });
   return data;
 };
-const serverConfig: any = {
-  port: 3000,
-};
-if (configOuput.VITE_APP_USE_BACKEND_PROXY) {
-  serverConfig.proxy = getProxyUrlsDict();
-}
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [
-    TanStackRouterVite({
-      target: "react",
-      autoCodeSplitting: true,
-    }),
-    react(),
-    tailwindcss(),
-  ],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
 
-      // fix loading all icon chunks in dev mode
-      // https://github.com/tabler/tabler-icons/issues/1233
-      "@tabler/icons-react": "@tabler/icons-react/dist/esm/icons/index.mjs",
+  const useBackendProxy = env.VITE_APP_USE_BACKEND_PROXY === 'true';
+
+  console.log("VITE_APP_USE_BACKEND_PROXY", useBackendProxy);
+
+  return {
+    plugins: [
+      TanStackRouterVite({
+        target: "react",
+        autoCodeSplitting: true,
+      }),
+      react(),
+      tailwindcss(),
+    ],
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+        "@tabler/icons-react": "@tabler/icons-react/dist/esm/icons/index.mjs",
+      },
     },
-  },
-  build: {
-    outDir: "dist", // keeps index.html at root of dist/
-    assetsDir: "static/assets", // put assets under /static/assets
-  },
-  server: serverConfig,
+    build: {
+      outDir: "dist",
+      assetsDir: "static/assets",
+    },
+    server: {
+      port: 3000,
+      proxy: useBackendProxy ? getProxyUrlsDict() : undefined,
+    },
+  };
 });

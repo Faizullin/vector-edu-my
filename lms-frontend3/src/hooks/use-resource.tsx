@@ -79,7 +79,7 @@ export function useResource<T extends DocumentBase>({
         enableSorting: false,
         enableHiding: false,
       };
-      newCols.unshift(newEl);
+      return [newEl, ...newCols];
     }
     return newCols;
   }, [initialColumns, useRowSelection]);

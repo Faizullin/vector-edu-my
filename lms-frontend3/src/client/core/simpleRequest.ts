@@ -13,7 +13,7 @@ export const simpleRequest = <T>(
     const my_error = error as ApiError;
     if (my_error.message === "Unauthorized") {
       setAuthStorageLoggedIn(false);
-      window.location.href = "/login";
+      window.location.href = "/lms/sign-in";
     }
     throw error;
   });

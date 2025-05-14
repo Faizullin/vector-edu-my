@@ -24,7 +24,7 @@ export function DataTableToolbar<TData>({
         <GlobalSearchField<TData> table={table} />
         <div className="flex gap-x-2">
           {columns.map((col) => {
-            const meta = col.columnDef.meta as MyColumnMeta<TData>;
+            const meta = col.columnDef.meta as MyColumnMeta;
             if (!meta?.filter) return null;
 
             return (

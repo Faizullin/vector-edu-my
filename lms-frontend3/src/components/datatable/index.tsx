@@ -20,7 +20,7 @@ import type { ActionComponent } from "./types";
 
 declare module "@tanstack/react-table" {
   interface ColumnMeta<TData extends RowData, TValue> {
-    filter?: MyColumnMeta<TData>["filter"];
+    filter?: MyColumnMeta["filter"];
     className?: string;
     sizeBorderStyle?: boolean;
   }
@@ -50,10 +50,10 @@ export function Datatable<T extends DocumentBase>({
                         ? cn(
                             "drop-shadow-[0_1px_2px_rgb(0_0_0_/_0.1)] dark:drop-shadow-[0_1px_2px_rgb(255_255_255_/_0.1)] lg:drop-shadow-none",
                             "bg-background transition-colors duration-200 group-hover/row:bg-muted group-data-[state=selected]/row:bg-muted",
-                            "sticky left-6 md:table-cell",
+                            "sticky left-6 md:table-cell"
                           )
                         : "",
-                      header.column.columnDef.meta?.className || "",
+                      header.column.columnDef.meta?.className || ""
                     );
                   }, [header.column.columnDef.meta]);
                   return (
@@ -70,7 +70,7 @@ export function Datatable<T extends DocumentBase>({
                       ) : (
                         flexRender(
                           header.column.columnDef.header,
-                          header.getContext(),
+                          header.getContext()
                         )
                       )}
                     </TableHead>
@@ -93,16 +93,16 @@ export function Datatable<T extends DocumentBase>({
                         ? cn(
                             "drop-shadow-[0_1px_2px_rgb(0_0_0_/_0.1)] dark:drop-shadow-[0_1px_2px_rgb(255_255_255_/_0.1)] lg:drop-shadow-none",
                             "bg-background transition-colors duration-200 group-hover/row:bg-muted group-data-[state=selected]/row:bg-muted",
-                            "sticky left-6 md:table-cell",
+                            "sticky left-6 md:table-cell"
                           )
                         : "",
-                      cell.column.columnDef.meta?.className || "",
+                      cell.column.columnDef.meta?.className || ""
                     );
                     return (
                       <TableCell key={cell.id} className={classes}>
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext(),
+                          cell.getContext()
                         )}
                       </TableCell>
                     );

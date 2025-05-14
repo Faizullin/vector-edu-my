@@ -81,7 +81,7 @@ export default function Posts() {
               <Badge variant="outline" className={cn("capitalize", badgeColor)}>
                 {
                   postsPublicationStatusOptions.find(
-                    (option) => option.value === `${publication_status}`,
+                    (option) => option.value === `${publication_status}`
                   )?.label
                 }
               </Badge>
@@ -126,7 +126,7 @@ export default function Posts() {
                               resource.query.refetch();
                             });
                         }
-                      },
+                      }
                     );
                   },
                 },
@@ -139,7 +139,7 @@ export default function Posts() {
   }, []);
   const resource = useResource<PostDocument>({
     name: "posts",
-    url: `/resources/posts/`,
+    url: `/resources/posts`,
     columns,
   });
   const handleCreate = useCallback(() => {

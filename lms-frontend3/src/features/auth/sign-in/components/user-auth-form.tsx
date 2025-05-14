@@ -1,4 +1,3 @@
-import { ApiError } from "@/client";
 import { PasswordInput } from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,8 +10,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import useAuth from "@/hooks/use-auth";
-import { useCustomToast } from "@/hooks/use-custom-toast";
 import { cn } from "@/lib/utils";
+import { handleServerError } from "@/utils/handle-server-error";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type HTMLAttributes } from "react";
 import { useForm } from "react-hook-form";
@@ -34,7 +33,7 @@ const formSchema = z.object({
 
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const { loginMutation, resetError } = useAuth();
-  const { showErrorToast } = useCustomToast();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -46,27 +45,13 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   });
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    if (form.formState.isSubmitting) return;
     resetError();
     try {
       await loginMutation.mutateAsync(data);
-    } catch (e) {
-      if (e instanceof ApiError) {
-        if (e.message === "Bad Request") {
-          const errorMsg = (e.body as any)?.errors;
-          if (errorMsg) {
-            showErrorToast({
-              title: "Login failed",
-              description: errorMsg,
-            });
-          } else {
-            showErrorToast({
-              title: "Login failed",
-              description: "Invalid username or password",
-            });
-          }
-        }
-      }
+    } catch (error) {
+      handleServerError(error, {
+        form: form,
+      });
     }
   };
 
@@ -109,6 +94,14 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
             </FormItem>
           )}
         />
+
+        {/* Show global form error */}
+        {(form.formState.errors as any).errors && (
+          <p className="text-sm font-medium text-destructive">
+            {(form.formState.errors as any).errors.message}
+          </p>
+        )}
+
         <Button className="mt-2" disabled={loginMutation.isPending}>
           Login
         </Button>

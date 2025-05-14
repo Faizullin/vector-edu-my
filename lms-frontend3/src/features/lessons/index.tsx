@@ -12,20 +12,45 @@ import { Search } from "@/components/search";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { useCustomToast } from "@/hooks/use-custom-toast";
 import { useResource } from "@/hooks/use-resource";
-import { useMutation } from "@tanstack/react-query";
+import { showComponentNiceDialog } from "@/utils/nice-modal";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { createColumnHelper } from "@tanstack/react-table";
 import { BookOpenIcon, PlusIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { LessonPageDrawer } from "./components/lesson-pages-dialogs";
 import { LessonEditNiceDialog } from "./components/lessons-dialogs";
-import { type LessonDocument } from "./data/schema";
+import { type LessonBatchDocument, type LessonDocument } from "./data/schema";
 
 const col = createColumnHelper<LessonDocument>();
+
+const useDrawerControl = () => {
+  const [open, setOpen] = useState(false);
+  const [recordId, setRecordId] = useState<DocumentId | null>(null);
+  const openDrawer = useCallback((recordId: DocumentId) => {
+    setRecordId(recordId);
+    setOpen(true);
+  }, []);
+  const closeDrawer = useCallback(() => {
+    setOpen(false);
+  }, []);
+  return {
+    open,
+    openDrawer,
+    closeDrawer,
+    setRecordId,
+    recordId,
+  };
+};
 
 export default function Lessons() {
   const urlParams = useSearch({
     from: "/_layout/lessons/lessons",
   });
+  const batch_id = useMemo(() => {
+    const { batch_id } = urlParams as any;
+    return batch_id ? (batch_id as DocumentId) : null;
+  }, [urlParams]);
   const navigate = useNavigate();
   const { showSuccessToast } = useCustomToast();
   const deleteMutation = useMutation({
@@ -35,6 +60,16 @@ export default function Lessons() {
         method: "DELETE",
       }),
   });
+  const lessonQuery = useQuery<LessonBatchDocument>({
+    queryKey: ["lesson-batches", batch_id],
+    queryFn: () =>
+      simpleRequest({
+        url: `/lessons/batches/${batch_id}`,
+        method: "GET",
+      }),
+    enabled: !!batch_id,
+  });
+  const pagesDrawerControl = useDrawerControl();
   const columns = useMemo(() => {
     return [
       col.accessor("id", {
@@ -75,7 +110,47 @@ export default function Lessons() {
             type: "select",
             options: [],
             displayType: "toolbar",
+            query: {
+              key: ["lesson-batches"],
+              fetchOptionsUrl: `/lessons/batches`,
+              transformResponse: (data: LessonBatchDocument[]) => {
+                return data.map((item) => ({
+                  label: item.title,
+                  value: `${item.id}`,
+                }));
+              },
+            },
           },
+        },
+      }),
+      col.accessor("is_available_on_free", {
+        header: "Is Available on Free",
+        enableSorting: false,
+        cell: ({ row }) => {
+          return row.getValue("is_available_on_free") ? "Yes" : "No";
+        },
+        meta: {
+          filter: {
+            type: "select",
+            options: [
+              {
+                label: "Yes",
+                value: "true",
+              },
+              {
+                label: "No",
+                value: "false",
+              },
+            ],
+            displayType: "toolbar",
+          },
+        },
+      }),
+      col.accessor("order", {
+        header: "Order",
+        enableSorting: true,
+        cell: ({ row }) => {
+          return row.getValue("order") ? row.getValue("order") : "-";
         },
       }),
       col.display({
@@ -85,14 +160,21 @@ export default function Lessons() {
             <DataTableRowActions
               row={row}
               actions={{
+                // openPages: {
+                //   label: "Open Pages",
+                //   shortcutIcon: <BookOpenIcon />,
+                //   callback: ({ row }) => {
+                //     navigate({
+                //       to: `/lessons/${row.original.id}/pages`,
+                //       params: { lesson_id: `${row.original.id}` },
+                //     });
+                //   },
+                // },
                 openPages: {
                   label: "Open Pages",
                   shortcutIcon: <BookOpenIcon />,
                   callback: ({ row }) => {
-                    navigate({
-                      to: `/lessons/${row.original.id}/pages`,
-                      params: { lesson_id: `${row.original.id}` },
-                    });
+                    pagesDrawerControl.openDrawer(row.original.id);
                   },
                 },
               }}
@@ -120,7 +202,7 @@ export default function Lessons() {
                               resource.query.refetch();
                             });
                         }
-                      },
+                      }
                     );
                   },
                 },
@@ -149,7 +231,6 @@ export default function Lessons() {
     },
   });
   useEffect(() => {
-    const { batch_id } = urlParams as any;
     if (batch_id) {
       resource.datatable.table.setColumnFilters((old) => {
         return [
@@ -164,10 +245,14 @@ export default function Lessons() {
     } else {
       setReady(true);
     }
-  }, [urlParams]);
+  }, [batch_id]);
   const handleCreate = useCallback(() => {
-    NiceModal.show(LessonEditNiceDialog, {});
-  }, []);
+    showComponentNiceDialog(LessonEditNiceDialog, {
+      defaultValues: {
+        lesson_batch: lessonQuery.data,
+      },
+    });
+  }, [lessonQuery.data]);
   return (
     <>
       <Header fixed>
@@ -179,6 +264,11 @@ export default function Lessons() {
       </Header>
 
       <Main>
+        <LessonPageDrawer
+          lessonId={pagesDrawerControl.recordId}
+          open={pagesDrawerControl.open}
+          onOpenChange={(v) => !v && pagesDrawerControl.closeDrawer()}
+        />
         <DatatablePagePanel
           resource={resource}
           topbar={{

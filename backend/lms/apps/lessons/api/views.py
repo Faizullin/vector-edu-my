@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from django.db.models import Count
 from api_lessons.models import Lesson, LessonPage, LessonBatch
 from lms.apps.core.utils.api_actions import BaseActionException
-from lms.apps.core.utils.crud_base.views import BaseViewSet
+from lms.apps.core.utils.crud_base.views import BaseApiViewSet
 from lms.apps.posts.models import Post
 from .serializers import (
     LessonSerializer,
@@ -17,7 +17,7 @@ from .serializers import (
 )
 
 
-class LessonsBatchViewSet(BaseViewSet):
+class LessonsBatchViewSet(BaseApiViewSet):
     search_fields = [
         "title",
     ]
@@ -47,7 +47,7 @@ class LessonsBatchViewSet(BaseViewSet):
         return LessonBatchSerializer
 
 
-class LessonsLessonViewSet(BaseViewSet):
+class LessonsLessonViewSet(BaseApiViewSet):
     search_fields = ["title", "description"]
     ordering_fields = ["id", "order"]
 
@@ -57,7 +57,12 @@ class LessonsLessonViewSet(BaseViewSet):
 
         class Meta:
             model = Lesson
-            fields = ["id", "title", "batch_id"]
+            fields = [
+                "id",
+                "title",
+                "batch_id",
+                "is_available_on_free",
+            ]
 
     filterset_class = LessonFilter
 
@@ -75,10 +80,9 @@ class LessonsLessonViewSet(BaseViewSet):
         if self.request.method in ["POST", "PUT", "PATCH"]:
             return LessonSubmitSerializer
         return LessonSerializer
-        
 
 
-class LessonsPageViewSet(BaseViewSet):
+class LessonsPageViewSet(BaseApiViewSet):
     search_fields = ["id"]
     ordering_fields = ["id", "order"]
 
@@ -92,7 +96,7 @@ class LessonsPageViewSet(BaseViewSet):
                 "lesson",
             ]
 
-    # filterset_class = LessonPageFilter
+    filterset_class = LessonPageFilter
 
     def get_queryset(self):
         return LessonPage.objects.all()

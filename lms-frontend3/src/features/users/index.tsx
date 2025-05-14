@@ -93,7 +93,7 @@ export default function Users() {
   }, []);
   const resource = useResource<UserDocument>({
     name: "users",
-    url: `/accounts/users/`,
+    url: `/accounts/users`,
     columns,
     useRowSelection: true,
   });

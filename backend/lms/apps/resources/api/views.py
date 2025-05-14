@@ -11,7 +11,7 @@ from api_lessons.models import QuestionComponent, QuestionAnswer, \
 from api_lessons.serializers.components_serializers import BlueCardComponentSerializer
 from lms.apps.core.models import PublicationStatus
 from lms.apps.core.utils.api_actions import BaseAction, BaseActionException
-from lms.apps.core.utils.crud_base.views import BaseListApiView, BaseViewSet
+from lms.apps.core.utils.crud_base.views import BaseListApiView, BaseApiViewSet
 from lms.apps.editor.api.views import BaseContentEditorActionAPIView
 from lms.apps.posts.models import Post, Tag, Category
 from .components_utils import COMPONENT_NAME_TO_ELEMENT_FIELD_NAME_DICT, COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT
@@ -26,7 +26,7 @@ from django_filters.rest_framework import FilterSet
 from django_filters import CharFilter
 
 
-class ResourcesPostViewSet(BaseViewSet):
+class ResourcesPostViewSet(BaseApiViewSet):
     search_fields = ['title', ]
     
     class PostFilter(FilterSet):
@@ -67,7 +67,7 @@ class TagListAPIView(BaseListApiView):
         return queryset
 
 
-class ResourcesCategoryViewSet(BaseViewSet):
+class ResourcesCategoryViewSet(BaseApiViewSet):
     search_fields = ['title']
 
     def get_queryset(self):
@@ -77,7 +77,7 @@ class ResourcesCategoryViewSet(BaseViewSet):
         return CategorySerializer
 
 
-class ResourcesTextComponentViewSet(BaseViewSet):
+class ResourcesTextComponentViewSet(BaseApiViewSet):
     search_fields = ['title', "text"]
 
     def get_queryset(self):
@@ -87,7 +87,7 @@ class ResourcesTextComponentViewSet(BaseViewSet):
         return TextComponentSerializer
 
 
-class ResourcesQuestionComponentViewSet(BaseViewSet):
+class ResourcesQuestionComponentViewSet(BaseApiViewSet):
     search_fields = ['text']
 
     def get_queryset(self):
@@ -128,7 +128,7 @@ class ResourcesQuestionComponentViewSet(BaseViewSet):
         return q_obj
 
 
-class ResourcesBlueCardComponentViewSet(BaseViewSet):
+class ResourcesBlueCardComponentViewSet(BaseApiViewSet):
     search_fields = ['text', ]
 
     def get_queryset(self):
@@ -138,7 +138,7 @@ class ResourcesBlueCardComponentViewSet(BaseViewSet):
         return BlueCardComponentSerializer
 
 
-class ResourcesAudioComponentViewSet(BaseViewSet):
+class ResourcesAudioComponentViewSet(BaseApiViewSet):
     search_fields = ['title', ]
 
     def get_queryset(self):
@@ -148,7 +148,7 @@ class ResourcesAudioComponentViewSet(BaseViewSet):
         return AudioComponentSerializer
 
 
-class ResourceFillTextComponentViewSet(BaseViewSet):
+class ResourceFillTextComponentViewSet(BaseApiViewSet):
     search_fields = ['title', ]
 
     def get_queryset(self):
@@ -195,7 +195,7 @@ class ResourceFillTextComponentViewSet(BaseViewSet):
         return f_obj
 
 
-class ResourcesVideoComponentViewSet(BaseViewSet):
+class ResourcesVideoComponentViewSet(BaseApiViewSet):
     search_fields = ['description', ]
 
     def get_queryset(self):
@@ -205,7 +205,7 @@ class ResourcesVideoComponentViewSet(BaseViewSet):
         return VideoComponentSerializer
 
 
-class ResourcesOrderComponentViewSet(BaseViewSet):
+class ResourcesOrderComponentViewSet(BaseApiViewSet):
     search_fields = ['title', ]
 
     def get_queryset(self):
@@ -246,7 +246,7 @@ class ResourcesOrderComponentViewSet(BaseViewSet):
         return p_obj
 
 
-class ResourcesRecordAudioComponentViewSet(BaseViewSet):
+class ResourcesRecordAudioComponentViewSet(BaseApiViewSet):
     search_fields = ['title', 'description', ]
 
     def get_queryset(self):
@@ -256,7 +256,7 @@ class ResourcesRecordAudioComponentViewSet(BaseViewSet):
         return RecordingComponentSerializer
 
 
-class ResourcesImageComponentViewSet(BaseViewSet):
+class ResourcesImageComponentViewSet(BaseApiViewSet):
     search_fields = ['description', ]
 
     def get_queryset(self):
@@ -266,7 +266,7 @@ class ResourcesImageComponentViewSet(BaseViewSet):
         return ImageComponentSerializer
 
 
-class ResourcesMatchingComponentViewSet(BaseViewSet):
+class ResourcesMatchingComponentViewSet(BaseApiViewSet):
     search_fields = ['title', ]
 
     def get_queryset(self):

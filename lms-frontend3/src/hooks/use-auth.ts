@@ -1,4 +1,3 @@
-import { ApiError } from "@/client";
 import { simpleRequest } from "@/client/core/simpleRequest";
 import type { AuthUser } from "@/client/types.gen";
 import {
@@ -6,7 +5,6 @@ import {
   isLoggedIn,
   setAuthStorageLoggedIn,
 } from "@/utils/auth";
-import { handleError } from "@/utils/handleError";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
@@ -18,42 +16,34 @@ const useAuth = () => {
   const { data: user } = useQuery<AuthUser | null, Error>({
     queryKey: ["currentUser"],
     queryFn: async () => {
-      return simpleRequest({
+      const data = await simpleRequest<AuthUser>({
         url: "/auth/me/",
         method: "GET",
-      }).then((data: any) => {
-        localStorage.setItem(
-          "auth",
-          JSON.stringify({
-            isLoggedIn: true,
-            user: {
-              id: data.id,
-              username: data.username,
-              email: data.email,
-            },
-          }),
-        );
-        return data;
       });
+
+      const authInfo = {
+        isLoggedIn: true,
+        user: data,
+      };
+
+      localStorage.setItem("auth", JSON.stringify(authInfo));
+      return data;
     },
     enabled: isLoggedIn(),
   });
 
   const loginMutation = useMutation({
-    mutationFn: (cred: any) => {
-      return simpleRequest({
+    mutationFn: async (cred: any) => {
+      const data = await simpleRequest({
         url: "/auth/login/",
         method: "POST",
         formData: cred,
-      }).then(() => {
-        setAuthStorageLoggedIn(true);
       });
+      setAuthStorageLoggedIn(true);
+      return data;
     },
     onSuccess: () => {
       navigate({ to: "/" });
-    },
-    onError: (err: ApiError) => {
-      handleError(err);
     },
   });
 
