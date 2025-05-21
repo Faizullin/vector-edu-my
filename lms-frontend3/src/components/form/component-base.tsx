@@ -40,8 +40,8 @@ export type FormMode = "create" | "edit" | "view";
  */
 export interface ApiService<T extends DocumentBase> {
   get: (id: string) => Promise<T>;
-  create: (data: Omit<T, "id">) => Promise<T>;
-  update: (id: string, data: Partial<T>) => Promise<T>;
+  create: (data: Omit<T, "id"> | FormData) => Promise<T>;
+  update: (id: string, data: Partial<T> | FormData) => Promise<T>;
 }
 
 /**
@@ -168,7 +168,7 @@ interface FormOptions<
       action: "load" | "post" | "reset";
     }
   ) => z.infer<TSchema>;
-  transformToApi?: (formData: z.infer<TSchema>) => Partial<T>;
+  transformToApi?: (formData: z.infer<TSchema>) => Partial<T> | FormData;
 
   // Mode switching behavior
   switchToEditOnCreate?: boolean;
@@ -200,14 +200,14 @@ export const createDefaultApiService = <T extends DocumentBase>({
       method: "GET",
     }) as Promise<T>;
   },
-  create: async (data: Omit<T, "id">) => {
+  create: async (data: Omit<T, "id"> | FormData) => {
     return simpleRequest({
       url: `${url}/`,
       method: "POST",
       body: data,
     }) as Promise<T>;
   },
-  update: async (id: string, data: Partial<T>) => {
+  update: async (id: string, data: Partial<T> | FormData) => {
     return simpleRequest({
       url: `${url}/${id}/`,
       method: "PATCH",
@@ -321,7 +321,7 @@ export function useComponentBaseForm<
         throw new Error("API service not provided");
       }
       const transformedData = transformToApi(data);
-      return await apiService.update(recordId!, transformedData);
+      return await apiService.update(`${recordId!}`, transformedData);
     },
     onMutate: () => {
       notify.loading("Updating record...");
@@ -374,7 +374,7 @@ export function useComponentBaseForm<
       apiService &&
       (formMode === "edit" || formMode === "view")
     ) {
-      loadRecord(recordId).catch((err) =>
+      loadRecord(`${recordId}`).catch((err) =>
         notify.error("Failed to load record", err)
       );
     }
@@ -470,7 +470,7 @@ export function useComponentBaseForm<
       }
 
       try {
-        await loadRecord(targetId);
+        await loadRecord(`${targetId}`);
       } catch (err) {
         return Promise.reject(err);
       }
@@ -496,6 +496,7 @@ export function useComponentBaseForm<
     loadRecord,
     createMutation,
     updateMutation,
+    notify,
   };
 }
 
@@ -511,7 +512,9 @@ interface ComponentFormBaseProps<
   modal: { visible: boolean; hide: () => void };
   displayType: "dialog" | "drawer";
   getTitle: (
-    hook?: UseComponentSimpleFormOptions<T, TSchema> | FormOptions<T, TSchema>
+    hook:
+      | ReturnType<typeof useComponentBaseForm<T, TSchema>>
+      | ReturnType<typeof useComponentSimpleForm<T, TSchema>>
   ) => string;
   isProcessing?: boolean;
   showResetButton?: boolean;
@@ -557,7 +560,7 @@ export const ComponentFormBase = <
           formHook.form.reset();
         }}
       >
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="!max-w-[1000px]">
           <form id={formName} onSubmit={formHook.handleSubmit}>
             <DialogHeader className="text-left">
               <DialogTitle>{title}</DialogTitle>

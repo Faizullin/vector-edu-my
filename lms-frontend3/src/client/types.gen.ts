@@ -31,7 +31,7 @@ export type PaginatedData<T> = {
 //     }
 // }) => Array<ColumnDef<T> | AccessorColumnDef<T, any> | DisplayColumnDef<T>>;
 
-export type DocumentId = string;
+export type DocumentId = number;
 export interface DocumentBase {
   id: DocumentId;
 }
@@ -98,3 +98,18 @@ export type MyColumnMeta = {
 //     description: string;
 //     pages: LessonPageDocument[];
 // }
+export interface CommentDocument extends DocumentBase {
+  content: string;
+  type: string;
+  content_type: any;
+  object_id: DocumentId;
+  user: {
+    id: DocumentId;
+    username: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+  };
+  created_at: string;
+  updated_at: string;
+}

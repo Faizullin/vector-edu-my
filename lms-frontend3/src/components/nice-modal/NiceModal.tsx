@@ -88,12 +88,12 @@ export interface NiceModalHandler<Props = Record<string, unknown>>
 
 // Props for HOC wrapper
 interface NiceModalHocProps {
-  id: string;
+  id?: string;
   defaultVisible?: boolean;
   keepMounted?: boolean;
 }
 
-export type NiceModalHocPropsExtended<T> = T & NiceModalHocProps;
+export type NiceModalHocPropsExtended<T> = T & Omit<NiceModalHocProps, "id">;
 
 // Symbol for modal ID
 const symModalId = Symbol("NiceModalId");
@@ -120,7 +120,7 @@ const ALREADY_MOUNTED: Record<string, boolean> = {};
 let uidSeed = 0;
 let dispatch: React.Dispatch<NiceModalAction> = () => {
   throw new Error(
-    "No dispatch method detected, did you embed your app with NiceModal.Provider?",
+    "No dispatch method detected, did you embed your app with NiceModal.Provider?"
   );
 };
 const getUid = () => `_nice_modal_${uidSeed++}`;
@@ -128,7 +128,7 @@ const getUid = () => `_nice_modal_${uidSeed++}`;
 // Modal reducer for state management
 export const reducer = (
   state: NiceModalStore = initialState,
-  action: NiceModalAction,
+  action: NiceModalAction
 ): NiceModalStore => {
   switch (action.type) {
     case "nice-modal/show": {
@@ -185,7 +185,7 @@ function getModal(modalId: string): React.FC<any> | undefined {
 // Action creators
 function showModal(
   modalId: string,
-  args?: Record<string, unknown>,
+  args?: Record<string, unknown>
 ): NiceModalAction {
   return {
     type: "nice-modal/show",
@@ -198,7 +198,7 @@ function showModal(
 
 function setModalFlags(
   modalId: string,
-  flags: Record<string, unknown>,
+  flags: Record<string, unknown>
 ): NiceModalAction {
   return {
     type: "nice-modal/set-flags",
@@ -256,16 +256,16 @@ export function show<
 
 export function show<T extends any>(
   modal: string,
-  args?: Record<string, unknown>,
+  args?: Record<string, unknown>
 ): Promise<T>;
 export function show<T extends any, P extends any>(
   modal: string,
-  args: P,
+  args: P
 ): Promise<T>;
 
 export function show(
   modal: React.FC<any> | string,
-  args?: NiceModalArgs<React.FC<any>> | Record<string, unknown>,
+  args?: NiceModalArgs<React.FC<any>> | Record<string, unknown>
 ) {
   const modalId = getModalId(modal);
   if (typeof modal !== "string" && !MODAL_REGISTRY[modalId]) {
@@ -329,14 +329,14 @@ const setFlags = (modalId: string, flags: Record<string, unknown>): void => {
 export function useModal(): NiceModalHandler;
 export function useModal(
   modal: string,
-  args?: Record<string, unknown>,
+  args?: Record<string, unknown>
 ): NiceModalHandler;
 export function useModal<
   C extends any,
   P extends Partial<NiceModalArgs<React.FC<C>>>,
 >(
   modal: React.FC<C>,
-  args?: P,
+  args?: P
 ): Omit<NiceModalHandler, "show"> & {
   show: (args?: P) => Promise<unknown>;
 };
@@ -368,7 +368,7 @@ export function useModal(modal?: any, args?: any): any {
 
   const showCallback = useCallback(
     (args?: Record<string, unknown>) => show(mid, args),
-    [mid],
+    [mid]
   );
   const hideCallback = useCallback(() => hide(mid), [mid]);
   const removeCallback = useCallback(() => remove(mid), [mid]);
@@ -377,21 +377,21 @@ export function useModal(modal?: any, args?: any): any {
       modalCallbacks[mid]?.resolve(args);
       delete modalCallbacks[mid];
     },
-    [mid],
+    [mid]
   );
   const rejectCallback = useCallback(
     (args?: unknown) => {
       modalCallbacks[mid]?.reject(args);
       delete modalCallbacks[mid];
     },
-    [mid],
+    [mid]
   );
   const resolveHide = useCallback(
     (args?: unknown) => {
       hideModalCallbacks[mid]?.resolve(args);
       delete hideModalCallbacks[mid];
     },
-    [mid],
+    [mid]
   );
 
   return useMemo(
@@ -418,15 +418,16 @@ export function useModal(modal?: any, args?: any): any {
       resolveCallback,
       rejectCallback,
       resolveHide,
-    ],
+    ]
   );
 }
 
 // HOC creator for modal components
 export const create = <P extends NiceModalHocProps>(
-  Comp: React.ComponentType<P>,
+  Comp: React.ComponentType<P>
 ): React.FC<P & NiceModalHocProps> => {
-  return ({ defaultVisible, keepMounted, id, ...props }) => {
+  return ({ defaultVisible, keepMounted, ...props }) => {
+    const id = props.id!;
     const { args, show } = useModal(id);
 
     // If there's modal state, then should mount it.
@@ -472,7 +473,7 @@ export const create = <P extends NiceModalHocProps>(
 export const register = <T extends React.FC<any>>(
   id: string,
   comp: T,
-  props?: Partial<NiceModalArgs<T>>,
+  props?: Partial<NiceModalArgs<T>>
 ): void => {
   if (!MODAL_REGISTRY[id]) {
     MODAL_REGISTRY[id] = { comp, props };
@@ -494,7 +495,7 @@ const NiceModalPlaceholder: React.FC = () => {
   visibleModalIds.forEach((id) => {
     if (!MODAL_REGISTRY[id] && !ALREADY_MOUNTED[id]) {
       Log.warn(
-        `No modal found for id: ${id}. Please check the id or if it is registered or declared via JSX.`,
+        `No modal found for id: ${id}. Please check the id or if it is registered or declared via JSX.`
       );
       return;
     }
@@ -587,7 +588,7 @@ export const ModalHolder = ({
   }
   if (!ModalComp) {
     throw new Error(
-      `No modal found for id: ${modal} in NiceModal.ModalHolder.`,
+      `No modal found for id: ${modal} in NiceModal.ModalHolder.`
     );
   }
   handler.show = useCallback((args: any) => show(mid, args), [mid]);
@@ -597,10 +598,13 @@ export const ModalHolder = ({
 };
 
 // Helper for creating modal handlers with TypeScript support
-export function createModalHandler<T extends React.ComponentType<any>>(): {
+export function createModalHandler<
+  T extends React.ComponentType<any>,
+  TReturnType = unknown,
+>(): {
   show: (
-    args?: Omit<React.ComponentProps<T>, keyof NiceModalHocProps>,
-  ) => Promise<unknown>;
+    args?: Omit<React.ComponentProps<T>, keyof NiceModalHocProps>
+  ) => Promise<TReturnType>;
   hide: () => void;
 } {
   return Object.create(null);

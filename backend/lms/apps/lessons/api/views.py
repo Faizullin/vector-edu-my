@@ -1,4 +1,6 @@
+import json
 from django.contrib.contenttypes.models import ContentType
+from api_lessons.models.lesson_components.__page_element import LessonPageElement
 from django_filters import CharFilter, NumberFilter
 from django_filters.rest_framework import FilterSet
 from rest_framework.decorators import action
@@ -15,6 +17,9 @@ from .serializers import (
     LessonBatchSerializer,
     LessonPageReorderSubmitSerializer,
 )
+from django.utils import timezone
+
+from ...resources.lesson_page_editor.api.components_utils import COMPONENT_NAME_TO_ELEMENT_FIELD_NAME_DICT
 
 
 class LessonsBatchViewSet(BaseApiViewSet):
@@ -82,6 +87,37 @@ class LessonsLessonViewSet(BaseApiViewSet):
         return LessonSerializer
 
 
+def create_initial_lesson_editor_post_content(lesson_page_obj: LessonPage, request):
+    elements: LessonPageElement = lesson_page_obj.elements.all()
+    initial_data = []
+    for element in elements:
+        for (
+            key,
+            key_component_field_name,
+        ) in COMPONENT_NAME_TO_ELEMENT_FIELD_NAME_DICT.items():
+            component_value = getattr(element, key_component_field_name)
+            if component_value:
+                initial_data.append(
+                    {
+                        "type": key,
+                        "data": {
+                            "static": False,
+                            "obj": {
+                                "id": component_value.id,
+                            },
+                            "element_id": element.id,
+                        },
+                    }
+                )
+    now = timezone.now()
+    # date in format "2025-05-19T21:37:48.476Z"
+    initial_data = {
+        "date": now.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+        "blocks": initial_data,
+    }
+    return json.dumps(initial_data)
+
+
 class LessonsPageViewSet(BaseApiViewSet):
     search_fields = ["id"]
     ordering_fields = ["id", "order"]
@@ -144,7 +180,7 @@ class LessonsPageViewSet(BaseApiViewSet):
         except Post.DoesNotExist:
             author = request.user
             title = (
-                f"Post for lesson page [{lesson_page_obj.id}]` #{lesson_page_obj.order}"
+                f"Post for Lesson Page {lesson_page_obj.id}` [#{lesson_page_obj.order}]"
             )
             post_obj = Post.objects.create(
                 title=title,
@@ -152,6 +188,9 @@ class LessonsPageViewSet(BaseApiViewSet):
                 post_type="editor",
                 content_type=ctype,
                 object_id=lesson_page_obj.id,
+                content=create_initial_lesson_editor_post_content(
+                    lesson_page_obj, request
+                ),
             )
 
         return Response(

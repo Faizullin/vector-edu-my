@@ -29,9 +29,20 @@ type ValidationError<TAttr> = {
   type: "validation_error";
   errors: Array<{
     attr: TAttr;
-    message: string;
+    code: string;
     detail: string;
   }>;
+};
+
+type ServerError = {
+  type: "server_error";
+  errors: [
+    {
+      attr: null;
+      code: "error";
+      detail: string;
+    },
+  ];
 };
 
 function getApiErrorData(error: ApiError) {
@@ -40,6 +51,11 @@ function getApiErrorData(error: ApiError) {
     if (errorBody["type"] === "validation_error") {
       const errorBody = error.body as ValidationError<string>;
       return errorBody;
+    }
+  }
+  if (error.message === "Internal Server Error") {
+    if (errorBody["type"] === "server_error") {
+      return errorBody as ServerError;
     }
   }
   if (errorBody.error) {
@@ -80,6 +96,15 @@ export function handleServerError(
             type: "manual",
             message: errItem.detail,
           });
+        });
+      }
+    } else if (errorBody?.type === "server_error") {
+      if (displayType === "toast") {
+        showToast("error", {
+          message: "Server Error",
+          data: {
+            description: errorBody.errors[0].detail,
+          },
         });
       }
     } else if (errorBody?.type === "simple_error") {

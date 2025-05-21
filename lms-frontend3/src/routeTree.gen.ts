@@ -10,139 +10,138 @@
 
 // Import Routes
 
-import { Route as rootRoute } from "./routes/__root";
-import { Route as LayoutImport } from "./routes/_layout";
-import { Route as LayoutIndexImport } from "./routes/_layout/index";
-import { Route as authSignInImport } from "./routes/(auth)/sign-in";
-import { Route as LayoutUsersIndexImport } from "./routes/_layout/users/index";
-import { Route as LayoutPostsIndexImport } from "./routes/_layout/posts/index";
-import { Route as LayoutLessonsLessonsImport } from "./routes/_layout/lessons/lessons";
-import { Route as LayoutLessonsBatchesImport } from "./routes/_layout/lessons/batches";
-import { Route as LayoutLessonsLessonidPagesImport } from "./routes/_layout/lessons/$lesson_id.pages";
+import { Route as rootRoute } from './routes/__root'
+import { Route as LayoutImport } from './routes/_layout'
+import { Route as LayoutIndexImport } from './routes/_layout/index'
+import { Route as authSignInImport } from './routes/(auth)/sign-in'
+import { Route as LayoutUsersIndexImport } from './routes/_layout/users/index'
+import { Route as LayoutPostsIndexImport } from './routes/_layout/posts/index'
+import { Route as LayoutLessonsLessonsImport } from './routes/_layout/lessons/lessons'
+import { Route as LayoutLessonsBatchesImport } from './routes/_layout/lessons/batches'
+import { Route as LayoutLessonsLessonidPagesPageidEditorImport } from './routes/_layout/lessons/$lesson_id.pages/$page_id.editor'
 
 // Create/Update Routes
 
 const LayoutRoute = LayoutImport.update({
-  id: "/_layout",
+  id: '/_layout',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
 
 const LayoutIndexRoute = LayoutIndexImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
 
 const authSignInRoute = authSignInImport.update({
-  id: "/(auth)/sign-in",
-  path: "/sign-in",
+  id: '/(auth)/sign-in',
+  path: '/sign-in',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
 
 const LayoutUsersIndexRoute = LayoutUsersIndexImport.update({
-  id: "/users/",
-  path: "/users/",
+  id: '/users/',
+  path: '/users/',
   getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
 
 const LayoutPostsIndexRoute = LayoutPostsIndexImport.update({
-  id: "/posts/",
-  path: "/posts/",
+  id: '/posts/',
+  path: '/posts/',
   getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
 
 const LayoutLessonsLessonsRoute = LayoutLessonsLessonsImport.update({
-  id: "/lessons/lessons",
-  path: "/lessons/lessons",
+  id: '/lessons/lessons',
+  path: '/lessons/lessons',
   getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
 
 const LayoutLessonsBatchesRoute = LayoutLessonsBatchesImport.update({
-  id: "/lessons/batches",
-  path: "/lessons/batches",
+  id: '/lessons/batches',
+  path: '/lessons/batches',
   getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
 
-const LayoutLessonsLessonidPagesRoute = LayoutLessonsLessonidPagesImport.update(
-  {
-    id: "/lessons/$lesson_id/pages",
-    path: "/lessons/$lesson_id/pages",
+const LayoutLessonsLessonidPagesPageidEditorRoute =
+  LayoutLessonsLessonidPagesPageidEditorImport.update({
+    id: '/lessons/$lesson_id/pages/$page_id/editor',
+    path: '/lessons/$lesson_id/pages/$page_id/editor',
     getParentRoute: () => LayoutRoute,
-  } as any,
-);
+  } as any)
 
 // Populate the FileRoutesByPath interface
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/_layout": {
-      id: "/_layout";
-      path: "";
-      fullPath: "";
-      preLoaderRoute: typeof LayoutImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/(auth)/sign-in": {
-      id: "/(auth)/sign-in";
-      path: "/sign-in";
-      fullPath: "/sign-in";
-      preLoaderRoute: typeof authSignInImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/_layout/": {
-      id: "/_layout/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof LayoutIndexImport;
-      parentRoute: typeof LayoutImport;
-    };
-    "/_layout/lessons/batches": {
-      id: "/_layout/lessons/batches";
-      path: "/lessons/batches";
-      fullPath: "/lessons/batches";
-      preLoaderRoute: typeof LayoutLessonsBatchesImport;
-      parentRoute: typeof LayoutImport;
-    };
-    "/_layout/lessons/lessons": {
-      id: "/_layout/lessons/lessons";
-      path: "/lessons/lessons";
-      fullPath: "/lessons/lessons";
-      preLoaderRoute: typeof LayoutLessonsLessonsImport;
-      parentRoute: typeof LayoutImport;
-    };
-    "/_layout/posts/": {
-      id: "/_layout/posts/";
-      path: "/posts";
-      fullPath: "/posts";
-      preLoaderRoute: typeof LayoutPostsIndexImport;
-      parentRoute: typeof LayoutImport;
-    };
-    "/_layout/users/": {
-      id: "/_layout/users/";
-      path: "/users";
-      fullPath: "/users";
-      preLoaderRoute: typeof LayoutUsersIndexImport;
-      parentRoute: typeof LayoutImport;
-    };
-    "/_layout/lessons/$lesson_id/pages": {
-      id: "/_layout/lessons/$lesson_id/pages";
-      path: "/lessons/$lesson_id/pages";
-      fullPath: "/lessons/$lesson_id/pages";
-      preLoaderRoute: typeof LayoutLessonsLessonidPagesImport;
-      parentRoute: typeof LayoutImport;
-    };
+    '/_layout': {
+      id: '/_layout'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof LayoutImport
+      parentRoute: typeof rootRoute
+    }
+    '/(auth)/sign-in': {
+      id: '/(auth)/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof authSignInImport
+      parentRoute: typeof rootRoute
+    }
+    '/_layout/': {
+      id: '/_layout/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof LayoutIndexImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/lessons/batches': {
+      id: '/_layout/lessons/batches'
+      path: '/lessons/batches'
+      fullPath: '/lessons/batches'
+      preLoaderRoute: typeof LayoutLessonsBatchesImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/lessons/lessons': {
+      id: '/_layout/lessons/lessons'
+      path: '/lessons/lessons'
+      fullPath: '/lessons/lessons'
+      preLoaderRoute: typeof LayoutLessonsLessonsImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/posts/': {
+      id: '/_layout/posts/'
+      path: '/posts'
+      fullPath: '/posts'
+      preLoaderRoute: typeof LayoutPostsIndexImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/users/': {
+      id: '/_layout/users/'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof LayoutUsersIndexImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/lessons/$lesson_id/pages/$page_id/editor': {
+      id: '/_layout/lessons/$lesson_id/pages/$page_id/editor'
+      path: '/lessons/$lesson_id/pages/$page_id/editor'
+      fullPath: '/lessons/$lesson_id/pages/$page_id/editor'
+      preLoaderRoute: typeof LayoutLessonsLessonidPagesPageidEditorImport
+      parentRoute: typeof LayoutImport
+    }
   }
 }
 
 // Create and export the route tree
 
 interface LayoutRouteChildren {
-  LayoutIndexRoute: typeof LayoutIndexRoute;
-  LayoutLessonsBatchesRoute: typeof LayoutLessonsBatchesRoute;
-  LayoutLessonsLessonsRoute: typeof LayoutLessonsLessonsRoute;
-  LayoutPostsIndexRoute: typeof LayoutPostsIndexRoute;
-  LayoutUsersIndexRoute: typeof LayoutUsersIndexRoute;
-  LayoutLessonsLessonidPagesRoute: typeof LayoutLessonsLessonidPagesRoute;
+  LayoutIndexRoute: typeof LayoutIndexRoute
+  LayoutLessonsBatchesRoute: typeof LayoutLessonsBatchesRoute
+  LayoutLessonsLessonsRoute: typeof LayoutLessonsLessonsRoute
+  LayoutPostsIndexRoute: typeof LayoutPostsIndexRoute
+  LayoutUsersIndexRoute: typeof LayoutUsersIndexRoute
+  LayoutLessonsLessonidPagesPageidEditorRoute: typeof LayoutLessonsLessonidPagesPageidEditorRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
@@ -151,91 +150,92 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutLessonsLessonsRoute: LayoutLessonsLessonsRoute,
   LayoutPostsIndexRoute: LayoutPostsIndexRoute,
   LayoutUsersIndexRoute: LayoutUsersIndexRoute,
-  LayoutLessonsLessonidPagesRoute: LayoutLessonsLessonidPagesRoute,
-};
+  LayoutLessonsLessonidPagesPageidEditorRoute:
+    LayoutLessonsLessonidPagesPageidEditorRoute,
+}
 
 const LayoutRouteWithChildren =
-  LayoutRoute._addFileChildren(LayoutRouteChildren);
+  LayoutRoute._addFileChildren(LayoutRouteChildren)
 
 export interface FileRoutesByFullPath {
-  "": typeof LayoutRouteWithChildren;
-  "/sign-in": typeof authSignInRoute;
-  "/": typeof LayoutIndexRoute;
-  "/lessons/batches": typeof LayoutLessonsBatchesRoute;
-  "/lessons/lessons": typeof LayoutLessonsLessonsRoute;
-  "/posts": typeof LayoutPostsIndexRoute;
-  "/users": typeof LayoutUsersIndexRoute;
-  "/lessons/$lesson_id/pages": typeof LayoutLessonsLessonidPagesRoute;
+  '': typeof LayoutRouteWithChildren
+  '/sign-in': typeof authSignInRoute
+  '/': typeof LayoutIndexRoute
+  '/lessons/batches': typeof LayoutLessonsBatchesRoute
+  '/lessons/lessons': typeof LayoutLessonsLessonsRoute
+  '/posts': typeof LayoutPostsIndexRoute
+  '/users': typeof LayoutUsersIndexRoute
+  '/lessons/$lesson_id/pages/$page_id/editor': typeof LayoutLessonsLessonidPagesPageidEditorRoute
 }
 
 export interface FileRoutesByTo {
-  "/sign-in": typeof authSignInRoute;
-  "/": typeof LayoutIndexRoute;
-  "/lessons/batches": typeof LayoutLessonsBatchesRoute;
-  "/lessons/lessons": typeof LayoutLessonsLessonsRoute;
-  "/posts": typeof LayoutPostsIndexRoute;
-  "/users": typeof LayoutUsersIndexRoute;
-  "/lessons/$lesson_id/pages": typeof LayoutLessonsLessonidPagesRoute;
+  '/sign-in': typeof authSignInRoute
+  '/': typeof LayoutIndexRoute
+  '/lessons/batches': typeof LayoutLessonsBatchesRoute
+  '/lessons/lessons': typeof LayoutLessonsLessonsRoute
+  '/posts': typeof LayoutPostsIndexRoute
+  '/users': typeof LayoutUsersIndexRoute
+  '/lessons/$lesson_id/pages/$page_id/editor': typeof LayoutLessonsLessonidPagesPageidEditorRoute
 }
 
 export interface FileRoutesById {
-  __root__: typeof rootRoute;
-  "/_layout": typeof LayoutRouteWithChildren;
-  "/(auth)/sign-in": typeof authSignInRoute;
-  "/_layout/": typeof LayoutIndexRoute;
-  "/_layout/lessons/batches": typeof LayoutLessonsBatchesRoute;
-  "/_layout/lessons/lessons": typeof LayoutLessonsLessonsRoute;
-  "/_layout/posts/": typeof LayoutPostsIndexRoute;
-  "/_layout/users/": typeof LayoutUsersIndexRoute;
-  "/_layout/lessons/$lesson_id/pages": typeof LayoutLessonsLessonidPagesRoute;
+  __root__: typeof rootRoute
+  '/_layout': typeof LayoutRouteWithChildren
+  '/(auth)/sign-in': typeof authSignInRoute
+  '/_layout/': typeof LayoutIndexRoute
+  '/_layout/lessons/batches': typeof LayoutLessonsBatchesRoute
+  '/_layout/lessons/lessons': typeof LayoutLessonsLessonsRoute
+  '/_layout/posts/': typeof LayoutPostsIndexRoute
+  '/_layout/users/': typeof LayoutUsersIndexRoute
+  '/_layout/lessons/$lesson_id/pages/$page_id/editor': typeof LayoutLessonsLessonidPagesPageidEditorRoute
 }
 
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | ""
-    | "/sign-in"
-    | "/"
-    | "/lessons/batches"
-    | "/lessons/lessons"
-    | "/posts"
-    | "/users"
-    | "/lessons/$lesson_id/pages";
-  fileRoutesByTo: FileRoutesByTo;
+    | ''
+    | '/sign-in'
+    | '/'
+    | '/lessons/batches'
+    | '/lessons/lessons'
+    | '/posts'
+    | '/users'
+    | '/lessons/$lesson_id/pages/$page_id/editor'
+  fileRoutesByTo: FileRoutesByTo
   to:
-    | "/sign-in"
-    | "/"
-    | "/lessons/batches"
-    | "/lessons/lessons"
-    | "/posts"
-    | "/users"
-    | "/lessons/$lesson_id/pages";
+    | '/sign-in'
+    | '/'
+    | '/lessons/batches'
+    | '/lessons/lessons'
+    | '/posts'
+    | '/users'
+    | '/lessons/$lesson_id/pages/$page_id/editor'
   id:
-    | "__root__"
-    | "/_layout"
-    | "/(auth)/sign-in"
-    | "/_layout/"
-    | "/_layout/lessons/batches"
-    | "/_layout/lessons/lessons"
-    | "/_layout/posts/"
-    | "/_layout/users/"
-    | "/_layout/lessons/$lesson_id/pages";
-  fileRoutesById: FileRoutesById;
+    | '__root__'
+    | '/_layout'
+    | '/(auth)/sign-in'
+    | '/_layout/'
+    | '/_layout/lessons/batches'
+    | '/_layout/lessons/lessons'
+    | '/_layout/posts/'
+    | '/_layout/users/'
+    | '/_layout/lessons/$lesson_id/pages/$page_id/editor'
+  fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
-  LayoutRoute: typeof LayoutRouteWithChildren;
-  authSignInRoute: typeof authSignInRoute;
+  LayoutRoute: typeof LayoutRouteWithChildren
+  authSignInRoute: typeof authSignInRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
   authSignInRoute: authSignInRoute,
-};
+}
 
 export const routeTree = rootRoute
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
 
 /* ROUTE_MANIFEST_START
 {
@@ -255,7 +255,7 @@ export const routeTree = rootRoute
         "/_layout/lessons/lessons",
         "/_layout/posts/",
         "/_layout/users/",
-        "/_layout/lessons/$lesson_id/pages"
+        "/_layout/lessons/$lesson_id/pages/$page_id/editor"
       ]
     },
     "/(auth)/sign-in": {
@@ -281,8 +281,8 @@ export const routeTree = rootRoute
       "filePath": "_layout/users/index.tsx",
       "parent": "/_layout"
     },
-    "/_layout/lessons/$lesson_id/pages": {
-      "filePath": "_layout/lessons/$lesson_id.pages.tsx",
+    "/_layout/lessons/$lesson_id/pages/$page_id/editor": {
+      "filePath": "_layout/lessons/$lesson_id.pages/$page_id.editor.tsx",
       "parent": "/_layout"
     }
   }

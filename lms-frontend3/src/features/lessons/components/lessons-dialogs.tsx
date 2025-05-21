@@ -31,7 +31,7 @@ const formSchema = z.object({
   description: z.string().optional(),
   lesson_batch: z.string().min(1, { message: "Lesson batch is required." }),
   is_available_on_free: z.boolean().optional(),
-  order: z.string().optional(),
+  order: z.number().optional(),
 });
 
 export const LessonEditNiceDialog = NiceModal.create<
@@ -79,6 +79,9 @@ export const LessonEditNiceDialog = NiceModal.create<
       if (meta.action === "load") {
         if (data.lesson_batch) {
           newData.lesson_batch = `${data.lesson_batch.id}`;
+        }
+        if (data.order) {
+          newData.order = Number(data.order);
         }
       }
       return newData;
@@ -218,6 +221,12 @@ export const LessonEditNiceDialog = NiceModal.create<
                         className="col-span-4"
                         autoComplete="off"
                         {...field}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value !== "") {
+                            field.onChange(Number(value));
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormMessage className="col-span-4 col-start-3" />

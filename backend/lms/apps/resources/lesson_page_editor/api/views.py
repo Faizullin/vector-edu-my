@@ -1,26 +1,54 @@
 import json
+from typing import List
+
+from rest_framework import permissions, status
+from rest_framework.response import Response
+
+from api_lessons.models import TextComponent, QuestionComponent, BlueCardComponent, AudioComponent, \
+    FillTextComponent, PutInOrderComponent, VideoComponent, ImageComponent, \
+    RecordAudioComponent
 from api_lessons.models.lesson_components.__component_base import LessonPage
 from api_lessons.models.lesson_components.__page_element import LessonPageElement
-from api_lessons.serializers.components_serializers import LessonPageSerializer
+from api_lessons.serializers.components_serializers import (
+    BlueCardComponentSerializer,
+    LessonPageSerializer,
+)
 from lms.apps.core.utils.api_actions import BaseAction, BaseActionException
+from lms.apps.core.utils.crud_base.views import BaseApiViewSet
 from lms.apps.editor.api.views import BaseContentEditorActionAPIView
 from lms.apps.posts.models import Post
-from lms.apps.resources.api.components_utils import COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT, COMPONENT_NAME_TO_ELEMENT_FIELD_NAME_DICT
+from lms.apps.resources.lesson_page_editor.api.serializers import (
+    AudioComponentSerializer,
+    FillTextComponentSerializer,
+    ImageComponentSerializer,
+    OrderComponentElementSerializer,
+    QuestionComponentSerializer,
+    RecordingComponentSerializer,
+    TextProComponentSerializer,
+    VideoComponentSerializer,
+    LessonPageElementSerializer,
+)
+from .components_utils import COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT, COMPONENT_NAME_TO_ELEMENT_FIELD_NAME_DICT
+from .matching.serializers import MatchingComponentCreateUpdateSerializer
+from .matching.views import MatchingComponentViewSet
 from .serializers import (
     BasePostEditSerializer,
     BuildAndPublishContentSerializer,
+    LoadComponentObjDataSerializer,
     PostSerializer,
     SaveContentSerializer,
 )
-from rest_framework import permissions, status
-from rest_framework.response import Response
-from rest_framework.authentication import SessionAuthentication
 
 
 class ActionRequestException(BaseActionException):
-    def __init__(self, message: dict | str, status_code=400):
+    errors: List[dict]
+
+    def __init__(self, message: dict | str, status_code=400, errors=None):
         super().__init__(message, status_code)
+        if errors is None:
+            errors = []
         self.status_code = status_code
+        self.errors = errors
 
 
 class LoadContentAction(BaseAction):
@@ -72,15 +100,16 @@ class SaveContentAction(BaseAction):
 
 def get_serializer_class_by_component_type(component_type):
     data_dict = {
+        "matching": MatchingComponentCreateUpdateSerializer,
         "question": QuestionComponentSerializer,
-        "blue-card": BlueCardComponentSerializer,
+        "bluecard": BlueCardComponentSerializer,
         "audio": AudioComponentSerializer,
         "fill-text": FillTextComponentSerializer,
         "video": VideoComponentSerializer,
         "record-audio": RecordingComponentSerializer,
-        "put-in-order": OrderComponentElementSerializer,
+        "order": OrderComponentElementSerializer,
         "image": ImageComponentSerializer,
-        "text": TextComponentSerializer,
+        "text-pro": TextProComponentSerializer,
     }
     return data_dict.get(component_type, None)
 
@@ -105,7 +134,10 @@ class LoadDemoLessonDataAction(BaseAction):
             raise BaseActionException("`object_id` is invalid")
         except Exception as e:
             raise BaseActionException(str(e))
-        lesson_page_serializer = LessonPageSerializer(lesson_page_obj)
+        lesson_page_serializer = LessonPageSerializer(lesson_page_obj, context={
+            "request": request,
+            "user": request.user,
+        })
         return {
             "success": 1,
             "data": {
@@ -121,49 +153,96 @@ class BuildAndPublishContentAction(BaseAction):
         serializer = BuildAndPublishContentSerializer(data=request.data)
         if not serializer.is_valid():
             raise ActionRequestException(serializer.errors)
+
         try:
             post_obj = Post.objects.get(pk=serializer.validated_data["post_id"])
         except Post.DoesNotExist:
             raise BaseActionException("`post_id` is invalid")
         except Exception as e:
             raise BaseActionException(str(e))
+
         if not post_obj.object_id:
             raise BaseActionException("Post object is not set")
+
         try:
             page_obj = LessonPage.objects.get(pk=post_obj.object_id)
         except LessonPage.DoesNotExist:
-            raise BaseActionException(
-                "Incorrect connection between Lesson Page and Post Editor object"
-            )
+            raise BaseActionException("Incorrect connection between Lesson Page and Post Editor object")
+
         formatted_content = serializer.validated_data["content"].strip()
         try:
             formatted_content = json.loads(formatted_content)
         except json.JSONDecodeError:
             raise BaseActionException("`content` is not a valid JSON string")
-        print("formatted_content", formatted_content)
-        els_data = []
+
+        errors = []
         new_formatted_content_data = []
-        for index, i in enumerate(formatted_content):
-            i_data = i.get("props").get("data")
-            i_data_obj = i_data.get("obj", None)
+        els_data = []
+
+        # ─────────────────────────────────────────────────────────────────────
+        # First pass: Validate blocks structure before mutation
+        # ─────────────────────────────────────────────────────────────────────
+        for index, block in enumerate(formatted_content.get("blocks", [])):
+            block_id = block.get("id")
+            data = block.get("data", {})
+            obj = data.get("obj")
+            i_type = block.get("type")
+
+            if not block_id:
+                errors.append({
+                    "block_index": index,
+                    "error": "Block must contain `id`",
+                    "block": block,
+                })
+                continue
+
+            if not obj or "id" not in obj:
+                errors.append({
+                    "block_id": block_id,
+                    "error": "Object Field is required OR Component does not exist",
+                    "block": block,
+                })
+                continue
+
+            if not i_type or i_type not in COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT:
+                errors.append({
+                    "block_id": block_id,
+                    "error": "`type` is missing or invalid",
+                })
+                continue
+
+        if errors:
+            raise ActionRequestException("Block-level validation failed before processing components.", errors=errors)
+
+        # ─────────────────────────────────────────────────────────────────────
+        # Second pass: Process and upsert components and elements
+        # ─────────────────────────────────────────────────────────────────────
+        for index, i_block in enumerate(formatted_content["blocks"]):
+            i_data = i_block["data"]
+            i_data_obj = i_data.get("obj")
             i_data_obj_values = i_data.get("values", None)
-            i_block_id = i.get("id")
-            i_type = i.get("type")
-            i_data_staticNotEditable = i_data.get("staticNotEditable", False)
-            component_class = COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT.get(i_type)
-            if component_class is None:
-                raise BaseActionException("item `type` is invalid")
-            field_name = COMPONENT_NAME_TO_ELEMENT_FIELD_NAME_DICT.get(i_type)
+            i_block_id = i_block.get("id")
+            i_type = i_block.get("type")
+            i_data_static = i_data.get("static", False)
+
+            component_class = COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT[i_type]
+            field_name = COMPONENT_NAME_TO_ELEMENT_FIELD_NAME_DICT[i_type]
             obj_kwargs = {
                 "page": page_obj,
                 "order": index + 1,
             }
-            component_obj = component_class(**obj_kwargs)
-            if i_data_obj is None:
-                if i_data_obj_values is None:
-                    raise BaseActionException("`obj` or `values` is required")
+
+            # Fetch or create/update component instance
+            try:
+                component_obj = component_class.objects.get(pk=i_data_obj["id"])
+            except component_class.DoesNotExist:
+                raise BaseActionException(f"`component_id`={i_data_obj['id']} is invalid")
+
+            if not i_data_static and i_data_obj_values:
                 component_serializer = get_serializer_class_by_component_type(i_type)(
-                    data=i_data_obj_values, partial=True
+                    instance=component_obj,
+                    partial=True,
+                    data=i_data_obj_values
                 )
                 if not component_serializer.is_valid():
                     raise ActionRequestException({
@@ -172,151 +251,120 @@ class BuildAndPublishContentAction(BaseAction):
                         "component_type": i_type,
                     })
                 component_obj = component_serializer.save()
-                obj_kwargs[field_name] = component_obj
+                serialized_data = component_serializer.data
             else:
-                if i_data_staticNotEditable:
-                    try:
-                        component_obj = component_class.objects.get(
-                            pk=i_data_obj.get("id")
-                        )
-                    except component_class.DoesNotExist:
-                        raise BaseActionException("`component_id` is invalid for staticNotEditable")
-                else:
-                    component_serializer = get_serializer_class_by_component_type(i_type)(
-                        data=i_data_obj, partial=True
-                    )
-                    if not component_serializer.is_valid():
-                        raise ActionRequestException({
-                            "errors": component_serializer.errors,
-                            "block_id": i_block_id,
-                            "component_type": i_type,
-                        })
-                    component_obj = component_serializer.save()
-                    obj_kwargs[field_name] = component_obj
-            els_data.append(obj_kwargs)  
-            new_i_ = i.copy()
-            if component_obj:
-                new_i_["props"]["data"]["obj"] = component_serializer.data
-            new_content.append(new_i_)
+                serialized_data = get_serializer_class_by_component_type(i_type)(instance=component_obj).data
 
-        print("new_content", new_content)
+            obj_kwargs[field_name] = component_obj
+            used_element_id = i_data.get("element_id")
 
-        page_obj.elements.delete()
-        element_page_list = []
-        for item in els_data:
-            if item.get('id'):
-                obj = LessonPageElement.objects.get(pk=item.get('id'))
-                obj.page = item.get('page')
-                obj.order = item.get('order')
+            content_index = len(new_formatted_content_data)
+            els_data.append({
+                "element_id": used_element_id,
+                "page_kwargs": obj_kwargs,
+                "content_index": content_index,
+            })
+
+            new_i_ = i_block.copy()
+            new_i_["data"]["obj"] = serialized_data
+            new_i_["data"]["element_id"] = used_element_id
+            new_formatted_content_data.append(new_i_)
+
+        # ─────────────────────────────────────────────────────────────────────
+        # Third pass: Upsert LessonPageElements and attach element_ids
+        # ─────────────────────────────────────────────────────────────────────
+        existing_elements = page_obj.elements.all()
+        existing_elements_dict = {i.id: i for i in existing_elements}
+        to_keep_ids = []
+
+        for meta in els_data:
+            element_id = meta["element_id"]
+            page_kwargs = meta["page_kwargs"]
+            idx = meta["content_index"]
+
+            if element_id and element_id in existing_elements_dict:
+                obj = existing_elements_dict[element_id]
+                for key, val in page_kwargs.items():
+                    setattr(obj, key, val)
                 obj.save()
-                element_page_list.append(obj)
             else:
-                obj = LessonPageElement.objects.create(**item)
-                element_page_list.append(obj)
+                obj = LessonPageElement.objects.create(**page_kwargs)
 
-        print("element_page_list", element_page_list)
+            element_id = obj.id
+            to_keep_ids.append(element_id)
+            new_formatted_content_data[idx]["data"]["element_id"] = element_id
 
-        new_content = []
-        for i in formatted_content:
-            i_data = i.get("props").get("data")
-            i_data_obj = i_data.get("obj", None)
-            i_data_obj_values = i_data.get("values", None)
-            i_block_id = i.get("id")
-            i_type = i.get("type")
-            if i_data_obj is None:
-                if i_data_obj_values is None:
-                    raise BaseActionException("`obj` or `values` is required")
-                component_class = COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT.get(i_type)
-            
-        return {
-            "success": 1,
-            "data": {
-                "elments": element_page_list,
-            },
+        new_formatted_content_data_dict = {
+            "date": formatted_content.get("date"),
+            "blocks": new_formatted_content_data,
         }
-        
-        els_data = []
-        for i, element in enumerate(elements):
-            mode = element.get("mode")
-            element_id = element.get("element_id", None)
-            component_id = element.get("component_id")
-            component_type = element.get("component_type")
-            component_class = COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT.get(
-                component_type
-            )
-            if component_class is None:
-                raise BaseActionException("`component_type` is invalid")
-            try:
-                component_obj = component_class.objects.get(pk=component_id)
-            except component_class.DoesNotExist:
-                raise BaseActionException("`component_id` is invalid")
-            field_name = COMPONENT_NAME_TO_ELEMENT_FIELD_NAME_DICT.get(component_type)
-            obj_kwargs = {
-                "page": page_obj,
-                "order": i + 1,
-                field_name: component_obj,
-            }
-            if mode == "edit":
-                if element_id is None:
-                    raise BaseActionException("`element_id` is required for edit mode")
-                obj_kwargs["id"] = element_id
 
-            els_data.append(obj_kwargs)
+        page_obj.elements.exclude(id__in=to_keep_ids).delete()
 
-        exclude_ids = [i.get("id") for i in els_data if i.get("id")]
-        page_obj.elements.exclude(id__in=exclude_ids).delete()
-
-        element_page_list = []
-        for item in els_data:
-            if item.get("id"):
-                obj = LessonPageElement.objects.get(pk=item.get("id"))
-                obj.page = item.get("page")
-                obj.order = item.get("order")
-                obj.save()
-                element_page_list.append(obj)
-            else:
-                obj = LessonPageElement.objects.create(**item)
-                element_page_list.append(obj)
+        post_obj.content = json.dumps(new_formatted_content_data_dict)
+        post_obj.save()
 
         return {
             "success": 1,
             "data": {
                 "instance": PostSerializer(post_obj).data,
-                "elements": LessonPageElementSerializer(
-                    page_obj.elements.all(), many=True
-                ).data,
+                "elements": LessonPageElementSerializer(page_obj.elements.all(), many=True).data,
+                "content": post_obj.content,
             },
         }
 
 
-# class LoadComponentsDataAction(BaseAction):
-#     name = "load-components-data"
+class LoadContentObjDataAction(BaseAction):
+    name = "load-content-obj-data"
 
-#     def apply(self, request):
-#         serializer = LoadComponentsDataActionSubmitSerializer(data=request.data)
-#         if not serializer.is_valid():
-#             raise BaseActionException(serializer.errors)
-#         validated_data = serializer.validated_data
-#         components = validated_data.get('components')
-#         response = []
-#         for component in components:
-#             component_id = component.get('component_id')
-#             component_type = component.get('component_type')
-#             component_class = COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT.get(component_type)
-#             if component_class is None:
-#                 raise BaseActionException("`component_type` is invalid")
-#             try:
-#                 component_obj = component_class.objects.get(pk=component_id)
-#             except component_class.DoesNotExist:
-#                 raise BaseActionException("`component_id` is invalid")
-#             response.append({
-#                 "tool_block_id": component.get('tool_block_id'),
-#                 "instance": get_serializer_class_by_component_type(component_type)(component_obj).data
-#             })
-#         return {
-#             "success": 1,
-#             "data": response
-#         }
+    def apply(self, request):
+        serializer = LoadComponentObjDataSerializer(data=request.data)
+        if not serializer.is_valid():
+            raise ActionRequestException(serializer.errors)
+        items_data = []
+        for i in serializer.validated_data["items"]:
+            component_type = i.get("component_type")
+            object_id = i.get("object_id")
+            component_class = COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT.get(
+                component_type
+            )
+            if component_class is None:
+                raise BaseActionException(
+                    f"`component_type` {component_type} is invalid"
+                )
+            items_data.append(
+                {
+                    "component_type": component_type,
+                    "object_id": object_id,
+                    "component_class": component_class,
+                }
+            )
+        items_response_data = []
+        for i in items_data:
+            component_class = i.get("component_class")
+            object_id = i.get("object_id")
+            try:
+                component_obj = component_class.objects.get(pk=object_id)
+            except component_class.DoesNotExist:
+                raise BaseActionException("`object_id` is invalid")
+            except Exception as e:
+                raise BaseActionException(str(e))
+            serializer = get_serializer_class_by_component_type(
+                i.get("component_type")
+            )(component_obj)
+            items_response_data.append(
+                {
+                    "component_type": i.get("component_type"),
+                    "object_id": object_id,
+                    "component_data": serializer.data,
+                }
+            )
+        return {
+            "success": 1,
+            "data": {
+                "items": items_response_data,
+            },
+        }
 
 
 class ResourcesPostEditContentActionAPIView(BaseContentEditorActionAPIView):
@@ -330,11 +378,8 @@ class ResourcesPostEditContentActionAPIView(BaseContentEditorActionAPIView):
         LoadContentAction(),
         SaveContentAction(),
         LoadDemoLessonDataAction(),
-        # HotUpdateComponentAction(),
+        LoadContentObjDataAction(),
         BuildAndPublishContentAction(),
-        # LoadComponentsDataAction(),
-        # ComponentFormSubmitAction(),
-        # BaseUploadImageByFileAction(),
     ]
 
     def post(self, request):
@@ -357,5 +402,133 @@ class ResourcesPostEditContentActionAPIView(BaseContentEditorActionAPIView):
         try:
             response = use_action.apply(request)
             return Response(response, status=status.HTTP_200_OK)
-        except BaseActionException as e:
-            return Response({"success": 0, "message": str(e)}, status=e.status)
+        except ActionRequestException as err:
+            return Response({
+                "success": 0,
+                "errors": {
+                    "message": str(err),
+                    "errors": err.errors,
+                },
+            })
+        except BaseActionException as err:
+            return Response({"success": 0, "message": str(err)}, status=e.status)
+
+
+class ResourcesTextComponentViewSet(BaseApiViewSet):
+    search_fields = ["title", "text"]
+
+    def get_queryset(self):
+        return TextComponent.objects.all()
+
+    def get_serializer_class(self):
+        return TextProComponentSerializer
+
+
+class ResourcesQuestionComponentViewSet(BaseApiViewSet):
+    search_fields = ["text"]
+
+    def get_queryset(self):
+        return QuestionComponent.objects.all().prefetch_related("answers")
+
+    def get_serializer_class(self):
+        return QuestionComponentSerializer
+
+
+class ResourcesBlueCardComponentViewSet(BaseApiViewSet):
+    search_fields = [
+        "text",
+    ]
+
+    def get_queryset(self):
+        return BlueCardComponent.objects.all()
+
+    def get_serializer_class(self):
+        return BlueCardComponentSerializer
+
+
+class ResourcesAudioComponentViewSet(BaseApiViewSet):
+    search_fields = [
+        "title",
+    ]
+
+    def get_queryset(self):
+        return AudioComponent.objects.all()
+
+    def get_serializer_class(self):
+        return AudioComponentSerializer
+
+
+class ResourceFillTextComponentViewSet(BaseApiViewSet):
+    search_fields = [
+        "title",
+    ]
+
+    def get_queryset(self):
+        return FillTextComponent.objects.all().prefetch_related("lines")
+
+    def get_serializer_class(self):
+        return FillTextComponentSerializer
+
+
+class ResourcesVideoComponentViewSet(BaseApiViewSet):
+    search_fields = [
+        "description",
+    ]
+
+    def get_queryset(self):
+        return VideoComponent.objects.all()
+
+    def get_serializer_class(self):
+        return VideoComponentSerializer
+
+
+class ResourcesOrderComponentViewSet(BaseApiViewSet):
+    search_fields = [
+        "title",
+    ]
+
+    def get_queryset(self):
+        return PutInOrderComponent.objects.all().prefetch_related("elements")
+
+    def get_serializer_class(self):
+        return OrderComponentElementSerializer
+
+
+class ResourcesRecordAudioComponentViewSet(BaseApiViewSet):
+    search_fields = [
+        "title",
+        "description",
+    ]
+
+    def get_queryset(self):
+        return RecordAudioComponent.objects.all()
+
+    def get_serializer_class(self):
+        return RecordingComponentSerializer
+
+
+class ResourcesImageComponentViewSet(BaseApiViewSet):
+    search_fields = [
+        "description",
+    ]
+
+    def get_queryset(self):
+        return ImageComponent.objects.all()
+
+    def get_serializer_class(self):
+        return ImageComponentSerializer
+
+
+__ALL__ = [
+    "ResourcesTextComponentViewSet",
+    "ResourcesQuestionComponentViewSet",
+    "ResourcesBlueCardComponentViewSet",
+    "ResourcesAudioComponentViewSet",
+    "ResourceFillTextComponentViewSet",
+    "ResourcesVideoComponentViewSet",
+    "ResourcesOrderComponentViewSet",
+    "ResourcesRecordAudioComponentViewSet",
+    "ResourcesImageComponentViewSet",
+    "ResourcesPostEditContentActionAPIView",
+    MatchingComponentViewSet,
+]

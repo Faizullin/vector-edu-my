@@ -1,5 +1,8 @@
 import type { DocumentBase } from "@/client";
 
+export interface LessonPageDocument extends DocumentBase {
+  order: number;
+}
 export interface LessonBatchDocument extends DocumentBase {
   title: string;
 }
