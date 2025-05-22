@@ -248,6 +248,7 @@ INSTALLED_APPS += [
     "lms.apps.attachments",
     "lms.apps.posts",
     "lms.apps.resources",
+    "lms.apps.reports",
 ]
 
 if DEBUG_MODE:

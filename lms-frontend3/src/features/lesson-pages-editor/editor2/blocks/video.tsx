@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useCustomToast } from "@/hooks/use-custom-toast";
 import { VideoIcon } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { z } from "zod";
 import { BlockCardWrapper } from "../components/BlockCardWrapper";
 import { createBlockSpec } from "../createBlockSpec";
@@ -166,6 +166,13 @@ export const VideoBlock = createBlockSpec<VideoComponent>({
       const handleImportClick = useCallback(() => {
         showDialog({ title: "Video", parseSearchResponse });
       }, [showDialog]);
+      useEffect(() => {
+        if (block.data.values) {
+          formHook.form.setValue("description", block.data.values.description || "");
+          formHook.form.setValue("video_url", block.data.values.video_url || "");
+        }
+      }, [block.data.values]);
+
       const staticMode = block.data?.static || false;
       return (
         <form onSubmit={formHook.handleSubmit} className="space-y-4">

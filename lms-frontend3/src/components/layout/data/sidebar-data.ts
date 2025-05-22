@@ -1,4 +1,4 @@
-import { IconBook, IconLayoutDashboard, IconUsers } from "@tabler/icons-react";
+import { IconBook, IconLayoutDashboard, IconReport, IconUsers } from "@tabler/icons-react";
 import { Command } from "lucide-react";
 import { type SidebarData } from "../types";
 
@@ -74,6 +74,11 @@ export const sidebarData: SidebarData = {
             // },
           ],
         },
+        {
+          title: "Reports",
+          url: "/reports",
+          icon: IconReport,
+        }
       ],
     },
     // {

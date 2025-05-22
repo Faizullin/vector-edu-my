@@ -36,6 +36,12 @@ const parseSearchResponse = (response: PaginatedData<ImageComponent>) =>
     label: `${getTruncatedText(item.description, 40)} [#${item.id}]`,
     value: `${item.id}`,
   }));
+const parseObjToValues = (obj: ImageComponent) => {
+  const data: any = {
+    description: obj.description,
+  };
+  return data;
+};
 const defaultValues = {
   description: "Description",
 };
@@ -52,9 +58,7 @@ export const ImageBlock = createBlockSpec<ImageComponent>({
   sideMenu: () => ({
     title: "Image",
     parseSearchResponse,
-    parseObjToValues: (obj) => ({
-      description: obj.description,
-    }),
+    parseObjToValues,
   }),
   render: ({ block }) => {
     const { obj } = block.data;
@@ -137,7 +141,7 @@ export const ImageBlock = createBlockSpec<ImageComponent>({
       const formHook = useComponentBaseForm<ImageComponent, typeof formSchema>({
         schema: formSchema,
         apiService: createDefaultApiService<ImageComponent>({
-          url: `/resources/component/image/`,
+          url: `/resources/component/image`,
         }),
         queryKey: "components/image",
         invalidateQueriesOnMutate: true,
@@ -248,6 +252,12 @@ export const ImageBlock = createBlockSpec<ImageComponent>({
           parseSearchResponse,
         });
       }, [showDialog]);
+      
+      useEffect(() => {
+        if (block.data.values) {
+          formHook.form.setValue("description", block.data.values.description || "");
+        }
+      }, [block.data.values]);
       const staticMode = block.data?.static || false;
       return (
         <form onSubmit={formHook.handleSubmit} className="space-y-4">

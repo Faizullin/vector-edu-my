@@ -57,13 +57,13 @@ class SubmitAccessObjUsersListAction(BaseAction):
         new_user_ids = [user.id for user in new_users]
         current_users = get_users_with_perms(related_obj)
 
-        to_remove_users = [user for user in current_users if user.id not in new_user_ids]
-        print("to_remove_users", to_remove_users)
+        # to_remove_users = [user for user in current_users if user.id not in new_user_ids]
+        # print("to_remove_users", to_remove_users)
         UserObjectPermission.objects.delete(user__in=to_remove_users, content_type=content_type,
                                             object_pk=related_obj.pk)
         current_user_ids = [user.id for user in current_users]
         to_add_users = [user for user in new_users if user.id not in current_user_ids]
-        print("to_add_users", to_add_users)
+        # print("to_add_users", to_add_users)
         for user in to_add_users:
             assign_perm("view", user, related_obj)
             assign_perm("change", user, related_obj)

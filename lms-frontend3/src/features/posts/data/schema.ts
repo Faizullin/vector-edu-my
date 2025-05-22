@@ -8,6 +8,7 @@ export interface PostDocument extends DocumentBase {
   title: string;
   author: Author;
   publication_status: 1 | 0;
+  post_type: string;
 }
 
 export const postsPublicationStatusOptions = [

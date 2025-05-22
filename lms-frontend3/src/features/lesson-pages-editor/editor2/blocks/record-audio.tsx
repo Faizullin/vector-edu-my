@@ -89,7 +89,7 @@ export const RecordAudioBlock = createBlockSpec<RecordAudioComponent>({
       const formHook = useComponentBaseForm<RecordAudioComponent, typeof formSchema>({
         schema: formSchema,
         apiService: createDefaultApiService<RecordAudioComponent>({
-          url: `/resources/component/record-audio/`,
+          url: `/resources/component/record-audio`,
         }),
         queryKey: "components/record-audio",
         invalidateQueriesOnMutate: true,

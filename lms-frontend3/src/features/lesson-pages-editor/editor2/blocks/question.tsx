@@ -121,7 +121,7 @@ export const QuestionBlock = createBlockSpec<QuestionComponent>({
       >({
         schema: formSchema,
         apiService: createDefaultApiService<QuestionComponent>({
-          url: `/resources/component/question/`,
+          url: `/resources/component/question`,
         }),
         queryKey: "components/question",
         invalidateQueriesOnMutate: true,

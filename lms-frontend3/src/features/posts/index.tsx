@@ -70,6 +70,18 @@ export default function Posts() {
         ),
         enableHiding: false,
       }),
+      col.accessor("post_type", {
+        header: "Post type",
+        enableSorting: false,
+        meta: {
+          filter: {
+            type: "text",
+            displayType: "toolbar",
+          },
+          sizeBorderStyle: true,
+        },
+        enableHiding: true,
+      }),
       col.accessor("publication_status", {
         header: "Publication",
         enableSorting: false,

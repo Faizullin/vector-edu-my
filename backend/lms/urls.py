@@ -9,4 +9,5 @@ urlpatterns = [
     path("", include("lms.apps.attachments.urls")),
     path("", include("lms.apps.lessons.urls")),
     path("", include("lms.apps.accounts.urls")),
+    path("", include("lms.apps.reports.urls")),
 ]

@@ -61,6 +61,7 @@ class PostSerializer(serializers.ModelSerializer):
             "meta_title",
             "content_type",
             "object_id",
+            "post_type",
         ]
 
 

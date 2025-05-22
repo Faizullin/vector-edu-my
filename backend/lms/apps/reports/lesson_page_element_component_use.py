@@ -1,7 +1,5 @@
 # list all not used compoents, elemtns , pages
-from api_lessons.models import LessonPage, LessonPageElement, AudioComponent, BlueCardComponent, FillTextComponent, \
-    ImageComponent, MatchingComponent, PutInOrderComponent, QuestionComponent, RecordAudioComponent, TextComponent, \
-    VideoComponent
+from api_lessons.models import LessonPage, LessonPageElement
 from lms.apps.resources.lesson_page_editor.api.components_utils import COMPONENT_NAME_TO_ELEMENT_FIELD_NAME_DICT, \
     COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT
 

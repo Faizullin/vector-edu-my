@@ -120,7 +120,7 @@ export const AudioBlock = createBlockSpec<AudioComponent>({
       const formHook = useComponentBaseForm<AudioComponent, typeof schema>({
         schema,
         apiService: createDefaultApiService<AudioComponent>({
-          url: `/resources/component/audio/`,
+          url: `/resources/component/audio`,
         }),
         queryKey: "components/audio",
         invalidateQueriesOnMutate: true,
@@ -208,7 +208,11 @@ export const AudioBlock = createBlockSpec<AudioComponent>({
             })),
         });
       };
-
+      useEffect(() => {
+        if (block.data.values) {
+          formHook.form.setValue("title", block.data.values.title || "");
+        }
+      }, [block.data.values]);
       const staticMode = block.data?.static || false;
 
       return (

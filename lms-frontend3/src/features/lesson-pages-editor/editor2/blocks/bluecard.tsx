@@ -95,7 +95,7 @@ export const BluecardBlock = createBlockSpec<BluecardComponent>({
       >({
         schema: formSchema,
         apiService: createDefaultApiService<BluecardComponent>({
-          url: `/resources/component/bluecard/`,
+          url: `/resources/component/bluecard`,
         }),
         queryKey: "components/bluecard",
         initialMode: block.data.obj ? "edit" : "create",

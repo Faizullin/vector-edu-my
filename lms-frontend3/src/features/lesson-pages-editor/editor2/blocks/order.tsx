@@ -104,7 +104,7 @@ export const OrderBlock = createBlockSpec<OrderComponent>({
       const formHook = useComponentBaseForm<OrderComponent, typeof formSchema>({
         schema: formSchema,
         apiService: createDefaultApiService<OrderComponent>({
-          url: `/resources/component/order/`,
+          url: `/resources/component/order`,
         }),
         queryKey: "components/order",
         invalidateQueriesOnMutate: true,

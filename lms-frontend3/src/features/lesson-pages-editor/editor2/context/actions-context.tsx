@@ -69,9 +69,18 @@ export function ActionsProvider({ children }: { children: React.ReactNode }) {
   });
   const loadAndParseEditor = useCallback(() => {
     loadQuery.mutateAsync().then((response) => {
+      const r = response.data as {
+        content: string;
+        elements: Array<{
+          id: DocumentId;
+          component_type: string;
+          component_id: DocumentId;
+          order: number;
+        }>;
+      };
       let parsed: SaveDataJsonType | null = null;
       try {
-        if (response.data.content) {
+        if (r.content) {
           parsed = JSON.parse(response.data.content);
         } else {
           parsed = createSaveData([
@@ -90,8 +99,33 @@ export function ActionsProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (e) {
         Log.error(e);
+        showErrorToast({
+          title: "Failed to parse JSON content",
+          description: `${e}`,
+          duration: 2000,
+        });
+        return;
       }
       if (parsed !== null) {
+        // const elements_ids_list= r.elements.map((item) => item.id);
+        // const parsed_elements_ids_list = parsed.blocks.filter(item => item.data.element_id).map((item) => item.data.element_id);
+
+        // const newBlcoksData: Block[] = [];
+        // const existingObjBlocks = parsed.blocks.filter(
+        //   (block) => block.data.obj && block.data.obj.id
+        // );
+        // elements_data_list.forEach((item) => {
+        //   const block = parsed.blocks.find((block) => block.id === item.id);
+        // });
+        // console.log("elements_data_list", elements_data_list);
+        // const elements_data_map = elements_data_list.reduce(
+        //   (acc, item) => {
+        //     acc[item.id] = item;
+        //     return acc;
+        //   },
+        //   {} as Record<string, any>
+        // );
+
         try {
           const items = parsed.blocks
             .filter((block) => block.data.obj)

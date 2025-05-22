@@ -105,7 +105,7 @@ export const TextProBlock = createBlockSpec<TextProComponent>({
       >({
         schema: formSchema,
         apiService: createDefaultApiService<TextProComponent>({
-          url: `/resources/component/text-pro/`,
+          url: `/resources/component/text-pro`,
         }),
         queryKey: "components/text-pro",
         initialMode: block.data.obj ? "edit" : "create",

@@ -64,14 +64,29 @@ class LoadContentAction(BaseAction):
             raise BaseActionException("`post_id` is invalid")
         except Exception as e:
             raise BaseActionException(str(e))
+        LessonPageModel = post_obj.content_type.model_class()
+        try:
+            page_obj = LessonPageModel.objects.get(pk=post_obj.object_id)
+        except LessonPageModel.DoesNotExist:
+            raise BaseActionException("`object_id` is invalid")
+        except Exception as e:
+            raise BaseActionException(str(e))
         json_instance_data = PostSerializer(post_obj).data
-        json_instance_data["content_type"] = post_obj.content_type.model
+        json_instance_data["content_type"] = page_obj._meta.model_name
         json_instance_data["object_id"] = post_obj.object_id
         return {
             "success": 1,
             "data": {
                 "content": post_obj.content,
                 "instance": json_instance_data,
+                # "elements": [
+                #     {
+                #         "id": el.id,
+                #         "component_type": el.component_type,
+                #         "component_id": el.id,
+                #         "order": el.order,
+                #     } for el in page_obj.elements.all()
+                # ]
             },
         }
 

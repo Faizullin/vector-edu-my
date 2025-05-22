@@ -24,10 +24,11 @@ class ResourcesPostViewSet(BaseApiViewSet):
 
     class PostFilter(FilterSet):
         title = CharFilter(lookup_expr="icontains")
+        post_type = CharFilter(lookup_expr="icontains")
 
         class Meta:
             model = Post
-            fields = ["id", "title", "author", "publication_status"]
+            fields = ["id", "title", "author", "publication_status", "post_type"]
 
     filterset_class = PostFilter
 

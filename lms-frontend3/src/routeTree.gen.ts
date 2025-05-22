@@ -15,6 +15,7 @@ import { Route as LayoutImport } from './routes/_layout'
 import { Route as LayoutIndexImport } from './routes/_layout/index'
 import { Route as authSignInImport } from './routes/(auth)/sign-in'
 import { Route as LayoutUsersIndexImport } from './routes/_layout/users/index'
+import { Route as LayoutReportsIndexImport } from './routes/_layout/reports/index'
 import { Route as LayoutPostsIndexImport } from './routes/_layout/posts/index'
 import { Route as LayoutLessonsLessonsImport } from './routes/_layout/lessons/lessons'
 import { Route as LayoutLessonsBatchesImport } from './routes/_layout/lessons/batches'
@@ -42,6 +43,12 @@ const authSignInRoute = authSignInImport.update({
 const LayoutUsersIndexRoute = LayoutUsersIndexImport.update({
   id: '/users/',
   path: '/users/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
+const LayoutReportsIndexRoute = LayoutReportsIndexImport.update({
+  id: '/reports/',
+  path: '/reports/',
   getParentRoute: () => LayoutRoute,
 } as any)
 
@@ -116,6 +123,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutPostsIndexImport
       parentRoute: typeof LayoutImport
     }
+    '/_layout/reports/': {
+      id: '/_layout/reports/'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof LayoutReportsIndexImport
+      parentRoute: typeof LayoutImport
+    }
     '/_layout/users/': {
       id: '/_layout/users/'
       path: '/users'
@@ -140,6 +154,7 @@ interface LayoutRouteChildren {
   LayoutLessonsBatchesRoute: typeof LayoutLessonsBatchesRoute
   LayoutLessonsLessonsRoute: typeof LayoutLessonsLessonsRoute
   LayoutPostsIndexRoute: typeof LayoutPostsIndexRoute
+  LayoutReportsIndexRoute: typeof LayoutReportsIndexRoute
   LayoutUsersIndexRoute: typeof LayoutUsersIndexRoute
   LayoutLessonsLessonidPagesPageidEditorRoute: typeof LayoutLessonsLessonidPagesPageidEditorRoute
 }
@@ -149,6 +164,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutLessonsBatchesRoute: LayoutLessonsBatchesRoute,
   LayoutLessonsLessonsRoute: LayoutLessonsLessonsRoute,
   LayoutPostsIndexRoute: LayoutPostsIndexRoute,
+  LayoutReportsIndexRoute: LayoutReportsIndexRoute,
   LayoutUsersIndexRoute: LayoutUsersIndexRoute,
   LayoutLessonsLessonidPagesPageidEditorRoute:
     LayoutLessonsLessonidPagesPageidEditorRoute,
@@ -164,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/lessons/batches': typeof LayoutLessonsBatchesRoute
   '/lessons/lessons': typeof LayoutLessonsLessonsRoute
   '/posts': typeof LayoutPostsIndexRoute
+  '/reports': typeof LayoutReportsIndexRoute
   '/users': typeof LayoutUsersIndexRoute
   '/lessons/$lesson_id/pages/$page_id/editor': typeof LayoutLessonsLessonidPagesPageidEditorRoute
 }
@@ -174,6 +191,7 @@ export interface FileRoutesByTo {
   '/lessons/batches': typeof LayoutLessonsBatchesRoute
   '/lessons/lessons': typeof LayoutLessonsLessonsRoute
   '/posts': typeof LayoutPostsIndexRoute
+  '/reports': typeof LayoutReportsIndexRoute
   '/users': typeof LayoutUsersIndexRoute
   '/lessons/$lesson_id/pages/$page_id/editor': typeof LayoutLessonsLessonidPagesPageidEditorRoute
 }
@@ -186,6 +204,7 @@ export interface FileRoutesById {
   '/_layout/lessons/batches': typeof LayoutLessonsBatchesRoute
   '/_layout/lessons/lessons': typeof LayoutLessonsLessonsRoute
   '/_layout/posts/': typeof LayoutPostsIndexRoute
+  '/_layout/reports/': typeof LayoutReportsIndexRoute
   '/_layout/users/': typeof LayoutUsersIndexRoute
   '/_layout/lessons/$lesson_id/pages/$page_id/editor': typeof LayoutLessonsLessonidPagesPageidEditorRoute
 }
@@ -199,6 +218,7 @@ export interface FileRouteTypes {
     | '/lessons/batches'
     | '/lessons/lessons'
     | '/posts'
+    | '/reports'
     | '/users'
     | '/lessons/$lesson_id/pages/$page_id/editor'
   fileRoutesByTo: FileRoutesByTo
@@ -208,6 +228,7 @@ export interface FileRouteTypes {
     | '/lessons/batches'
     | '/lessons/lessons'
     | '/posts'
+    | '/reports'
     | '/users'
     | '/lessons/$lesson_id/pages/$page_id/editor'
   id:
@@ -218,6 +239,7 @@ export interface FileRouteTypes {
     | '/_layout/lessons/batches'
     | '/_layout/lessons/lessons'
     | '/_layout/posts/'
+    | '/_layout/reports/'
     | '/_layout/users/'
     | '/_layout/lessons/$lesson_id/pages/$page_id/editor'
   fileRoutesById: FileRoutesById
@@ -254,6 +276,7 @@ export const routeTree = rootRoute
         "/_layout/lessons/batches",
         "/_layout/lessons/lessons",
         "/_layout/posts/",
+        "/_layout/reports/",
         "/_layout/users/",
         "/_layout/lessons/$lesson_id/pages/$page_id/editor"
       ]
@@ -275,6 +298,10 @@ export const routeTree = rootRoute
     },
     "/_layout/posts/": {
       "filePath": "_layout/posts/index.tsx",
+      "parent": "/_layout"
+    },
+    "/_layout/reports/": {
+      "filePath": "_layout/reports/index.tsx",
       "parent": "/_layout"
     },
     "/_layout/users/": {

@@ -2,7 +2,7 @@ from django.apps import AppConfig
 from django.utils.translation import gettext_lazy as _
 
 
-class ResourcesConfig(AppConfig):
+class ReportsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = "lms.apps.resources"
-    verbose_name = _("Resources")
+    name = "lms.apps.reports"
+    verbose_name = _("Reports")
