@@ -245,14 +245,6 @@ export const ImageBlock = createBlockSpec<ImageComponent>({
           setPreview(getProtectedUrl(block.data.obj.image.url));
         }
       }, [block.data.obj]);
-      const { showDialog } = useBlockImportDialog<ImageComponent>(block.id);
-      const handleImportClick = useCallback(() => {
-        showDialog({
-          title: "Image",
-          parseSearchResponse,
-        });
-      }, [showDialog]);
-      
       useEffect(() => {
         if (block.data.values) {
           formHook.form.setValue("description", block.data.values.description || "");
@@ -358,15 +350,6 @@ export const ImageBlock = createBlockSpec<ImageComponent>({
                 size="sm"
               >
                 Save
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="cursor-pointer ml-2"
-                onClick={handleImportClick}
-                size={"sm"}
-              >
-                Import
               </Button>
             </div>
           </Form>

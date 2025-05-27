@@ -165,28 +165,34 @@ export function LessonPageDrawer({
       dataIds: dataList.map((item) => item.id),
     });
   }, [saveOrderMutation, dataChangeState, dataList, lessonId]);
-  const moveUp = (id: DocumentId) => {
-    const index = dataList.findIndex((item) => item.id === id);
-    if (index > 0) {
-      const newDataList = [...dataList];
-      const temp = newDataList[index - 1];
-      newDataList[index - 1] = newDataList[index];
-      newDataList[index] = temp;
-      setDataList(newDataList);
-      setDataChangeState(true);
-    }
-  };
-  const moveDown = (id: DocumentId) => {
-    const index = dataList.findIndex((item) => item.id === id);
-    if (index < dataList.length - 1) {
-      const newDataList = [...dataList];
-      const temp = newDataList[index + 1];
-      newDataList[index + 1] = newDataList[index];
-      newDataList[index] = temp;
-      setDataList(newDataList);
-      setDataChangeState(true);
-    }
-  };
+  const moveDown = useCallback(
+    (id: DocumentId) => {
+      const index = dataList.findIndex((item) => item.id === id);
+      if (index < dataList.length - 1) {
+        const newDataList = [...dataList];
+        const temp = newDataList[index + 1];
+        newDataList[index + 1] = newDataList[index];
+        newDataList[index] = temp;
+        setDataList(newDataList);
+        setDataChangeState(true);
+      }
+    },
+    [dataList]
+  );
+  const moveUp = useCallback(
+    (id: DocumentId) => {
+      const index = dataList.findIndex((item) => item.id === id);
+      if (index > 0) {
+        const newDataList = [...dataList];
+        const temp = newDataList[index - 1];
+        newDataList[index - 1] = newDataList[index];
+        newDataList[index] = temp;
+        setDataList(newDataList);
+        setDataChangeState(true);
+      }
+    },
+    [dataList]
+  );
   const columns = useMemo(() => {
     return [
       col.display({
