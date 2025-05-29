@@ -1,3 +1,0 @@
-from api_lessons.models import get_video_link_from_vimeo as default_get_video_link_from_vimeo
-
-get_video_link_from_vimeo = default_get_video_link_from_vimeo
