@@ -1,3 +1,5 @@
+import { ApiError } from "@/client";
+import { simpleRequest } from "@/client/core/simpleRequest";
 import {
   createDefaultApiService,
   useComponentBaseForm,
@@ -24,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCustomToast } from "@/hooks/use-custom-toast";
+import { getApiErrorData } from "@/utils/handle-server-error";
 import { memo, useCallback, useMemo } from "react";
 import type { Block } from "../../types";
 import { MatchingQuestionsProvider, useMatchingQuestions } from "./context";
@@ -53,9 +56,59 @@ export const MatchingEditNiceDialog = NiceModal.create<
     typeof matchingComponentSchema
   >({
     schema: matchingComponentSchema,
-    apiService: createDefaultApiService({
-      url: `/resources/component/matching`,
-    }),
+    apiService: {
+      get: async (id: string) => {
+        return simpleRequest({
+          url: `/resources/component/matching/${id}/`,
+          method: "GET",
+        });
+      },
+      create: async (data: Omit<MatchingComponent, "id"> | FormData) => {
+        try {
+          return await simpleRequest({
+            url: "/resources/component/matching/",
+            method: "POST",
+            body: data,
+          });
+        } catch (error) {
+          if (error instanceof ApiError) {
+            const errorBody = getApiErrorData(error);
+            if (errorBody?.type === "validation_error") {
+              const errorArray: string[] = [];
+              errorBody.errors.forEach((errItem) => {
+                errorArray.push(`${errItem.code}: ${errItem.detail}`);
+              });
+              alert(`Validation Error: ${errorArray.join(", ")}`);
+            }
+            throw error;
+          }
+        }
+      },
+      update: async (
+        id: string,
+        data: Partial<MatchingComponent> | FormData
+      ) => {
+        try {
+          return await simpleRequest({
+            url: `/resources/component/matching/${id}/`,
+            method: "PATCH",
+            body: data,
+          });
+        } catch (error) {
+          if (error instanceof ApiError) {
+            const errorBody = getApiErrorData(error);
+            if (errorBody?.type === "validation_error") {
+              const errorArray: string[] = [];
+              errorBody.errors.forEach((errItem) => {
+                errorArray.push(`${errItem.code}: ${errItem.detail}`);
+              });
+              alert(`Validation Error: ${errorArray.join(", ")}`);
+            }
+            throw error;
+          }
+        }
+      },
+    } as ReturnType<typeof createDefaultApiService<MatchingComponent>>,
     queryKey: "components/matching",
     invalidateQueriesOnMutate: true,
     initialMode: formMode,
@@ -80,35 +133,7 @@ export const MatchingEditNiceDialog = NiceModal.create<
       },
     },
     transformToApi(submitData) {
-      const formData = new FormData();
-      formData.append("title", submitData.title);
-
-      submitData.elements.forEach((el, index) => {
-        formData.append(`elements[${index}]uid`, el.uid);
-        formData.append(`elements[${index}]text`, el.text);
-        if (el.image_file) {
-          formData.append(`elements[${index}]image_file`, el.image_file);
-        }
-        const existingElement = formHook.record?.elements.find(
-          (e) => e.uid === el.uid
-        );
-        if (existingElement?.id) {
-          formData.append(`elements[${index}].id`, `${existingElement.id}`);
-        }
-      });
-
-      submitData.couples.forEach((cp, index) => {
-        formData.append(
-          `couples[${index}]first_element`,
-          cp.first_element || ""
-        );
-        formData.append(
-          `couples[${index}]second_element`,
-          cp.second_element || ""
-        );
-      });
-
-      return formData;
+      return submitData as MatchingComponent;
     },
     transformToForm(data) {
       const newData: Matching = {

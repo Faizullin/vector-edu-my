@@ -2,7 +2,7 @@ import { AudioBlock } from "./blocks/audio";
 import { BluecardBlock } from "./blocks/bluecard";
 import { FillTextBlock } from "./blocks/fill-in";
 import { ImageBlock } from "./blocks/image";
-// import { MatchingBlock } from "./blocks/matching";
+import { MatchingBlock } from "./blocks/matching";
 import { OrderBlock } from "./blocks/order";
 import { QuestionBlock } from "./blocks/question";
 import { RecordAudioBlock } from "./blocks/record-audio";
@@ -32,5 +32,5 @@ export const schema = generateSpec([
   FillTextBlock,
   OrderBlock,
   RecordAudioBlock,
-  // MatchingBlock,
+  MatchingBlock,
 ]);

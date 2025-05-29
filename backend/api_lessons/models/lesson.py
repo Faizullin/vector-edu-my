@@ -20,6 +20,14 @@ class LessonBatch(models.Model):
         choices=LessonBatchNames.choices(),
         verbose_name="Название коллекции уроков",
     )
+    parent_lesson_batch = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name="Родительская коллекция уроков",
+        related_name="sub_batches",
+    )
 
     def __str__(self):
         return f'{self.pk} Lesson Batch: "{self.title}"'
@@ -110,8 +118,12 @@ class Lesson(models.Model):
         return components_answered_by_user.count() >= this_lesson_components.count()
 
     # my fields
-    created_at = models.DateTimeField(null=True, blank=True, auto_now_add=True, verbose_name='Создано')
-    updated_at = models.DateTimeField(null=True, blank=True, auto_now=True, verbose_name='Обновлено')
+    created_at = models.DateTimeField(
+        null=True, blank=True, auto_now_add=True, verbose_name="Создано"
+    )
+    updated_at = models.DateTimeField(
+        null=True, blank=True, auto_now=True, verbose_name="Обновлено"
+    )
     author = models.ForeignKey(
         UserModel,
         null=True,

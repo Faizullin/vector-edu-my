@@ -82,6 +82,55 @@ class _ItemIdMixin:
     item_id = serializers.IntegerField(write_only=True, required=False)
 
 
+class FileControlSerializer(BasePostEditSerializer):
+    ACTION_CHOICES = (
+        ("upload", "Upload"),
+        ("remove", "Remove"),
+    )
+
+    file_action = serializers.ChoiceField(choices=ACTION_CHOICES)
+    file = serializers.FileField(required=False, allow_null=True)
+    component_name = serializers.CharField()
+    file_field_name = serializers.CharField()
+    object_id = serializers.IntegerField()
+
+    def validate(self, data):
+        file_action = data.get("file_action")
+        file = data.get("file", None)
+
+        if file_action == "upload":
+            if file is None:
+                raise serializers.ValidationError(
+                    {"file": "File is required for upload."}
+                )
+
+            # Optional: Include format and size validation here
+            self.validate_file_format(file)
+            self.validate_file_size(file)
+
+        elif file_action == "remove":
+            if file:
+                raise serializers.ValidationError(
+                    {"file": "File should not be provided for remove."}
+                )
+
+        return data
+
+    def validate_file_format(self, file):
+        allowed_mime_types = ["image/jpeg", "image/png", "audio/mpeg"]
+        if file.content_type not in allowed_mime_types:
+            raise serializers.ValidationError({"file": "Unsupported file format."})
+
+    def validate_file_size(self, file, file_size_limit_b=None):
+        if file_size_limit_b is None:
+            file_size_limit_b = 10 * 1024 * 1024  # Default to 10MB
+        max_size_mb = int(file_size_limit_b / (1024 * 1024))  # Convert bytes to MB
+        if file.size > file_size_limit_b:
+            raise serializers.ValidationError(
+                {"file": f"File size exceeds {max_size_mb}MB."}
+            )
+
+
 # ───────────────────────────────────────────────────────────────
 # media components (audio / image)
 # ───────────────────────────────────────────────────────────────
@@ -333,19 +382,37 @@ class OrderComponentElementSerializer(serializers.ModelSerializer):
 
 
 class LessonPageElementSerializer(serializers.ModelSerializer):
-    blue_card_component = BlueCardComponentSerializer(many=False, allow_null=True, required=False)
-    audio_component = AudioComponentSerializer(many=False, allow_null=True, required=False)
+    blue_card_component = BlueCardComponentSerializer(
+        many=False, allow_null=True, required=False
+    )
+    audio_component = AudioComponentSerializer(
+        many=False, allow_null=True, required=False
+    )
     # matching_component = MatchingComponentSerializer(many=False, allow_null=True, required=False)
-    record_audio_component = RecordingComponentSerializer(many=False, allow_null=True, required=False)
-    video_component = VideoComponentSerializer(many=False, allow_null=True, required=False)
-    put_in_order_component = OrderComponentElementSerializer(many=False, allow_null=True, required=False)
-    text_component = TextProComponentSerializer(many=False, allow_null=True, required=False)
-    fill_text_component = FillTextComponentSerializer(many=False, allow_null=True, required=False)
-    question_component = QuestionComponentSerializer(many=False, allow_null=True, required=False)
-    image_component = ImageComponentSerializer(many=False, allow_null=True, required=False)
+    record_audio_component = RecordingComponentSerializer(
+        many=False, allow_null=True, required=False
+    )
+    video_component = VideoComponentSerializer(
+        many=False, allow_null=True, required=False
+    )
+    put_in_order_component = OrderComponentElementSerializer(
+        many=False, allow_null=True, required=False
+    )
+    text_component = TextProComponentSerializer(
+        many=False, allow_null=True, required=False
+    )
+    fill_text_component = FillTextComponentSerializer(
+        many=False, allow_null=True, required=False
+    )
+    question_component = QuestionComponentSerializer(
+        many=False, allow_null=True, required=False
+    )
+    image_component = ImageComponentSerializer(
+        many=False, allow_null=True, required=False
+    )
 
-    page = ModelIntegerField(source='page.id', model=LessonPage)
+    page = ModelIntegerField(source="page.id", model=LessonPage)
 
     class Meta:
         model = LessonPageElement
-        fields = '__all__'
+        fields = "__all__"

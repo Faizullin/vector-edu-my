@@ -45,7 +45,7 @@ type ServerError = {
   ];
 };
 
-function getApiErrorData(error: ApiError) {
+export function getApiErrorData(error: ApiError) {
   const errorBody = error.body as any;
   if (error.message === "Bad Request") {
     if (errorBody["type"] === "validation_error") {

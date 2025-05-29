@@ -52,17 +52,17 @@ export function CouplesList() {
       const secondElement = matchingComponent.elements.find(
         (el) => el.uid === couple.second_element
       );
-      if (!firstElement || !secondElement) {
-        throw new Error(
-          `Couple ${couple.trackUid} has invalid elements. Please check the data.`
-        );
-      }
+      // if (!firstElement || !secondElement) {
+      //   throw new Error(
+      //     `Couple ${couple.trackUid} has invalid elements. Please check the data.`
+      //   );
+      // }
       return {
         value: couple.trackUid,
         label: `${getTruncatedText(
-          firstElement.text || "Element",
+          firstElement?.text || "None",
           14
-        )} - ${getTruncatedText(secondElement.text || "Element", 14)}`,
+        )} - ${getTruncatedText(secondElement?.text || "None", 14)}`,
       };
     });
   }, [matchingComponent.couples, matchingComponent.elements]);

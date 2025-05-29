@@ -1,5 +1,6 @@
 # list all not used compoents, elemtns , pages
 from api_lessons.models import LessonPage, LessonPageElement
+from api_lessons.models.lesson_components.matching_component import MatchingComponentElementCouple, MatchingComponentElement
 from lms.apps.resources.lesson_page_editor.api.components_utils import COMPONENT_NAME_TO_ELEMENT_FIELD_NAME_DICT, \
     COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT
 
@@ -60,6 +61,15 @@ def collect():
             )
         )
 
+    all_couples = MatchingComponentElementCouple.objects.all()
+    used_elements_ids = set()
+    for couple in all_couples:
+        used_elements_ids.add(couple.first_element_id)
+        used_elements_ids.add(couple.second_element_id)
+    not_used_matching_component_elements_ids = MatchingComponentElement.objects.exclude(
+        id__in=used_elements_ids
+    ).values_list("id", flat=True)
+
     context = {
         "not_used_lesson_pages": {
             "ids": list(not_used_lesson_pages.values_list("id", flat=True)),
@@ -68,5 +78,8 @@ def collect():
             "ids": list(not_used_elements.values_list("id", flat=True)),
         },
         "not_used_components": not_used_component_name_components_ids_map,
+        "not_used_matching_component_elements": {
+            "ids": list(not_used_matching_component_elements_ids),
+        },
     }
     return context

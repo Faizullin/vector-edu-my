@@ -1,19 +1,29 @@
 import json
-from typing import List
-
 from rest_framework import permissions, status
 from rest_framework.response import Response
 
-from api_lessons.models import TextComponent, QuestionComponent, BlueCardComponent, AudioComponent, \
-    FillTextComponent, PutInOrderComponent, VideoComponent, ImageComponent, \
-    RecordAudioComponent
+from api_lessons.models import (
+    TextComponent,
+    QuestionComponent,
+    BlueCardComponent,
+    AudioComponent,
+    FillTextComponent,
+    PutInOrderComponent,
+    VideoComponent,
+    ImageComponent,
+    RecordAudioComponent,
+)
 from api_lessons.models.lesson_components.__component_base import LessonPage
 from api_lessons.models.lesson_components.__page_element import LessonPageElement
 from api_lessons.serializers.components_serializers import (
     BlueCardComponentSerializer,
     LessonPageSerializer,
 )
-from lms.apps.core.utils.api_actions import BaseAction, BaseActionException
+from lms.apps.core.utils.api_actions import (
+    BaseAction,
+    BaseActionException,
+    ActionRequestException,
+)
 from lms.apps.core.utils.crud_base.views import BaseApiViewSet
 from lms.apps.editor.api.views import BaseContentEditorActionAPIView
 from lms.apps.posts.models import Post
@@ -28,27 +38,23 @@ from lms.apps.resources.lesson_page_editor.api.serializers import (
     VideoComponentSerializer,
     LessonPageElementSerializer,
 )
-from .components_utils import COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT, COMPONENT_NAME_TO_ELEMENT_FIELD_NAME_DICT
+from lms.apps.resources.lesson_page_editor.api.matching.action import (
+    MatchingFileControlAction,
+)
+from .components_utils import (
+    COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT,
+    COMPONENT_NAME_TO_ELEMENT_FIELD_NAME_DICT,
+)
 from .matching.serializers import MatchingComponentCreateUpdateSerializer
 from .matching.views import MatchingComponentViewSet
 from .serializers import (
     BasePostEditSerializer,
     BuildAndPublishContentSerializer,
+    FileControlSerializer,
     LoadComponentObjDataSerializer,
     PostSerializer,
     SaveContentSerializer,
 )
-
-
-class ActionRequestException(BaseActionException):
-    errors: List[dict]
-
-    def __init__(self, message: dict | str, status_code=400, errors=None):
-        super().__init__(message, status_code)
-        if errors is None:
-            errors = []
-        self.status_code = status_code
-        self.errors = errors
 
 
 class LoadContentAction(BaseAction):
@@ -149,10 +155,13 @@ class LoadDemoLessonDataAction(BaseAction):
             raise BaseActionException("`object_id` is invalid")
         except Exception as e:
             raise BaseActionException(str(e))
-        lesson_page_serializer = LessonPageSerializer(lesson_page_obj, context={
-            "request": request,
-            "user": request.user,
-        })
+        lesson_page_serializer = LessonPageSerializer(
+            lesson_page_obj,
+            context={
+                "request": request,
+                "user": request.user,
+            },
+        )
         return {
             "success": 1,
             "data": {
@@ -182,7 +191,9 @@ class BuildAndPublishContentAction(BaseAction):
         try:
             page_obj = LessonPage.objects.get(pk=post_obj.object_id)
         except LessonPage.DoesNotExist:
-            raise BaseActionException("Incorrect connection between Lesson Page and Post Editor object")
+            raise BaseActionException(
+                "Incorrect connection between Lesson Page and Post Editor object"
+            )
 
         formatted_content = serializer.validated_data["content"].strip()
         try:
@@ -204,30 +215,39 @@ class BuildAndPublishContentAction(BaseAction):
             i_type = block.get("type")
 
             if not block_id:
-                errors.append({
-                    "block_index": index,
-                    "error": "Block must contain `id`",
-                    "block": block,
-                })
+                errors.append(
+                    {
+                        "block_index": index,
+                        "error": "Block must contain `id`",
+                        "block": block,
+                    }
+                )
                 continue
 
             if not obj or "id" not in obj:
-                errors.append({
-                    "block_id": block_id,
-                    "error": "Object Field is required OR Component does not exist",
-                    "block": block,
-                })
+                errors.append(
+                    {
+                        "block_id": block_id,
+                        "error": "Object Field is required OR Component does not exist",
+                        "block": block,
+                    }
+                )
                 continue
 
             if not i_type or i_type not in COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT:
-                errors.append({
-                    "block_id": block_id,
-                    "error": "`type` is missing or invalid",
-                })
+                errors.append(
+                    {
+                        "block_id": block_id,
+                        "error": "`type` is missing or invalid",
+                    }
+                )
                 continue
 
         if errors:
-            raise ActionRequestException("Block-level validation failed before processing components.", errors=errors)
+            raise ActionRequestException(
+                "Block-level validation failed before processing components.",
+                errors=errors,
+            )
 
         # ─────────────────────────────────────────────────────────────────────
         # Second pass: Process and upsert components and elements
@@ -251,34 +271,40 @@ class BuildAndPublishContentAction(BaseAction):
             try:
                 component_obj = component_class.objects.get(pk=i_data_obj["id"])
             except component_class.DoesNotExist:
-                raise BaseActionException(f"`component_id`={i_data_obj['id']} is invalid")
+                raise BaseActionException(
+                    f"`component_id`={i_data_obj['id']} is invalid"
+                )
 
             if not i_data_static and i_data_obj_values:
                 component_serializer = get_serializer_class_by_component_type(i_type)(
-                    instance=component_obj,
-                    partial=True,
-                    data=i_data_obj_values
+                    instance=component_obj, partial=True, data=i_data_obj_values
                 )
                 if not component_serializer.is_valid():
-                    raise ActionRequestException({
-                        "errors": component_serializer.errors,
-                        "block_id": i_block_id,
-                        "component_type": i_type,
-                    })
+                    raise ActionRequestException(
+                        {
+                            "errors": component_serializer.errors,
+                            "block_id": i_block_id,
+                            "component_type": i_type,
+                        }
+                    )
                 component_obj = component_serializer.save()
                 serialized_data = component_serializer.data
             else:
-                serialized_data = get_serializer_class_by_component_type(i_type)(instance=component_obj).data
+                serialized_data = get_serializer_class_by_component_type(i_type)(
+                    instance=component_obj
+                ).data
 
             obj_kwargs[field_name] = component_obj
             used_element_id = i_data.get("element_id")
 
             content_index = len(new_formatted_content_data)
-            els_data.append({
-                "element_id": used_element_id,
-                "page_kwargs": obj_kwargs,
-                "content_index": content_index,
-            })
+            els_data.append(
+                {
+                    "element_id": used_element_id,
+                    "page_kwargs": obj_kwargs,
+                    "content_index": content_index,
+                }
+            )
 
             new_i_ = i_block.copy()
             new_i_["data"]["obj"] = serialized_data
@@ -323,7 +349,9 @@ class BuildAndPublishContentAction(BaseAction):
             "success": 1,
             "data": {
                 "instance": PostSerializer(post_obj).data,
-                "elements": LessonPageElementSerializer(page_obj.elements.all(), many=True).data,
+                "elements": LessonPageElementSerializer(
+                    page_obj.elements.all(), many=True
+                ).data,
                 "content": post_obj.content,
             },
         }
@@ -382,12 +410,76 @@ class LoadContentObjDataAction(BaseAction):
         }
 
 
-class ResourcesPostEditContentActionAPIView(BaseContentEditorActionAPIView):
-    permission_classes = (
-        permissions.IsAuthenticated,
-        permissions.IsAdminUser,
-    )
+class FileControlAction(BaseAction):
+    name = "file-control"
 
+    def apply(self, request):
+        serializer = FileControlSerializer(data=request.data)
+        if not serializer.is_valid():
+            raise ActionRequestException(serializer.errors)
+        try:
+            post_obj = Post.objects.get(pk=serializer.validated_data["post_id"])
+        except Post.DoesNotExist:
+            raise ActionRequestException("`post_id` is invalid")
+        except Exception as e:
+            raise ActionRequestException(str(e))
+        file_action_name = serializer.validated_data["file_action"]
+        component_name = serializer.validated_data["component_name"]
+        file_field_name = serializer.validated_data["file_field_name"]
+        component_class = COMPONENT_NAME_TO_COMPONENT_MODEL_CLASS_DICT.get(
+            component_name
+        )
+        if component_class is None:
+            raise ActionRequestException(
+                f"`component_name` {component_name} is invalid"
+            )
+        try:
+            component_obj = component_class.objects.get(
+                pk=serializer.validated_data["object_id"]
+            )
+        except component_class.DoesNotExist:
+            raise ActionRequestException("`object_id` is invalid")
+        except Exception as e:
+            raise BaseActionException(str(e))
+        file_field = getattr(component_obj, file_field_name, None)
+        if file_field is None:
+            raise ActionRequestException(
+                f"`file_field_name` {file_field_name} is invalid for component {component_name}"
+            )
+        if file_action_name == "upload":
+            if file_field:
+                file_field.delete(save=False)
+            setattr(component_obj, file_field_name, serializer.validated_data["file"])
+            component_obj.save()
+            return {
+                "success": 1,
+                "data": {
+                    "message": "File uploaded successfully",
+                    "component_data": get_serializer_class_by_component_type(
+                        component_name
+                    )(component_obj).data,
+                },
+            }
+        elif file_action_name == "remove":
+            if not file_field:
+                raise ActionRequestException(
+                    f"No file found for component {component_name} with field {file_field_name}"
+                )
+            file_field.delete(save=False)
+            setattr(component_obj, file_field_name, None)
+            component_obj.save()
+            return {
+                "success": 1,
+                "data": {
+                    "message": "File removed successfully",
+                    "component_data": get_serializer_class_by_component_type(
+                        component_name
+                    )(component_obj).data,
+                },
+            }
+
+
+class ResourcesPostEditContentActionAPIView(BaseContentEditorActionAPIView):
     available_get_actions = []
     available_post_actions = [
         LoadContentAction(),
@@ -395,6 +487,8 @@ class ResourcesPostEditContentActionAPIView(BaseContentEditorActionAPIView):
         LoadDemoLessonDataAction(),
         LoadContentObjDataAction(),
         BuildAndPublishContentAction(),
+        FileControlAction(),
+        MatchingFileControlAction(),
     ]
 
     def post(self, request):
@@ -418,15 +512,17 @@ class ResourcesPostEditContentActionAPIView(BaseContentEditorActionAPIView):
             response = use_action.apply(request)
             return Response(response, status=status.HTTP_200_OK)
         except ActionRequestException as err:
-            return Response({
-                "success": 0,
-                "errors": {
-                    "message": str(err),
-                    "errors": err.errors,
-                },
-            })
+            return Response(
+                {
+                    "success": 0,
+                    "errors": {
+                        "message": str(err),
+                        "errors": err.errors,
+                    },
+                }
+            )
         except BaseActionException as err:
-            return Response({"success": 0, "message": str(err)}, status=e.status)
+            return Response({"success": 0, "message": str(err)}, status=err.status)
 
 
 class ResourcesTextComponentViewSet(BaseApiViewSet):

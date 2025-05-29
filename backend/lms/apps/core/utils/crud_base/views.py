@@ -37,12 +37,15 @@ class BaseListApiView(StandardizedViewMixin, viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
 
-class BaseApiViewSet(StandardizedViewMixin, viewsets.ModelViewSet):
+class AuthControlMixin:
     authentication_classes = (SessionAuthentication,)
-    permission_classes = (
+    permission_classes = [
         permissions.IsAuthenticated,
         permissions.IsAdminUser,
-    )
+    ]
+
+
+class BaseApiViewSet(AuthControlMixin, StandardizedViewMixin, viewsets.ModelViewSet):
     pagination_class = CustomPagination
     filter_backends = [
         DjangoFilterBackend,
@@ -83,12 +86,8 @@ class BaseApiViewSet(StandardizedViewMixin, viewsets.ModelViewSet):
         return context
 
 
-class BaseApiView(StandardizedViewMixin, APIView):
-    authentication_classes = (SessionAuthentication,)
-    permission_classes = (
-        permissions.IsAuthenticated,
-        permissions.IsAdminUser,
-    )
+class BaseApiView(AuthControlMixin, StandardizedViewMixin, APIView):
+    pass
 
 
 __ALL__ = [
