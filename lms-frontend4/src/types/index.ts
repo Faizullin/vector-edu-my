@@ -49,7 +49,7 @@ export type MyColumnMeta = {
         options: Array<FieldItem>;
         query?: {
           fetchOptionsUrl: string;
-          transformResponse: (data: any) => Array<FieldItem>;
+          transformResponse: (data: unknown) => Array<FieldItem>;
           key: string[];
           paginated?: boolean;
         };
@@ -59,7 +59,7 @@ export type MyColumnMeta = {
         type: "select-async";
         query?: {
           fetchOptionsUrl: string;
-          transformResponse: (data: any) => Array<FieldItem>;
+          transformResponse: (data: unknown) => Array<FieldItem>;
           key: string[];
         };
       }
@@ -101,7 +101,7 @@ export type MyColumnMeta = {
 export interface CommentDocument extends DocumentBase {
   content: string;
   type: string;
-  content_type: any;
+  content_type: unknown;
   object_id: DocumentId;
   user: {
     id: DocumentId;

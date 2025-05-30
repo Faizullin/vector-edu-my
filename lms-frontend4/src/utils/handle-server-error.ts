@@ -1,7 +1,8 @@
-import { ApiError } from "@/client";
 import type { UseFormReturn } from "react-hook-form";
 import { toast, type ExternalToast } from "sonner";
 import { Log } from "./log";
+
+type ApiError = any;
 
 type titleT = (() => React.ReactNode) | React.ReactNode;
 export function showToast(
@@ -41,7 +42,7 @@ type ServerError = {
       attr: null;
       code: "error";
       detail: string;
-    },
+    }
   ];
 };
 

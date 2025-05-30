@@ -1,7 +1,7 @@
-export default function debounce(fn: any, delay = 250) {
-  let timeout: any;
+export default function debounce(fn: (..._: unknown[]) => void, delay = 250) {
+  let timeout: NodeJS.Timeout;
 
-  return (...args: any) => {
+  return (...args: unknown[]) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
       fn(...args);
