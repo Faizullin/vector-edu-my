@@ -1,6 +1,7 @@
 "use client";
 
 import { simpleRequest } from "@/lib/simpleRequest";
+import { cn } from "@/lib/utils";
 import type { DocumentBase, DocumentId } from "@/types";
 import { handleServerError } from "@/utils/handle-server-error";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,6 +33,10 @@ import {
   SheetTitle,
 } from "../ui/sheet";
 
+interface ComponentClasses {
+  dialogContent?: ReturnType<typeof cn>;
+}
+
 /**
  * Form mode types
  */
@@ -55,7 +60,27 @@ interface NotificationHandlers {
   onLoading?: (message: string) => void;
 }
 
-interface UseComponentSimpleFormOptions<
+// ✅ Base form hook interface
+interface BaseFormHook<TFieldValues extends FieldValues = any> {
+  form: UseFormReturn<TFieldValues>;
+  isSubmitting: boolean;
+  error: Error | null;
+  handleSubmit: (e?: React.BaseSyntheticEvent) => Promise<void>;
+  handleReset: () => void;
+}
+
+// ✅ Extended form hook interface for base form
+interface ExtendedFormHook<TFieldValues extends FieldValues = any>
+  extends BaseFormHook<TFieldValues> {
+  formMode: FormMode;
+  recordId: DocumentId | null;
+  record: any | null;
+  setFormMode: (mode: FormMode) => void;
+  setRecordId: (id: DocumentId | null) => void;
+}
+
+// ✅ Simple form hook options
+interface UseSimpleFormOptions<
   T extends DocumentBase,
   TSchema extends ZodType<any, ZodTypeDef, any>
 > {
@@ -68,10 +93,11 @@ interface UseComponentSimpleFormOptions<
   onError?: (error: any) => void;
 }
 
+// ✅ Optimized simple form hook
 export function useComponentSimpleForm<
   T extends DocumentBase,
   TSchema extends ZodType<any, ZodTypeDef, any>
->(options: UseComponentSimpleFormOptions<T, TSchema>) {
+>(options: UseSimpleFormOptions<T, TSchema>): BaseFormHook<z.infer<TSchema>> {
   const {
     schema,
     defaultValues,
@@ -85,24 +111,9 @@ export function useComponentSimpleForm<
 
   const form = useForm<z.infer<TSchema>>({
     resolver: zodResolver(schema),
-    defaultValues: defaultValues,
+    defaultValues,
     mode: "onChange",
   });
-
-  // Notify helpers
-  const notify = {
-    success: (message: string, data?: any) => {
-      notifications?.onSuccess?.(message, data);
-    },
-    error: (message: string, err?: any) => {
-      const errorObj = err instanceof Error ? err : new Error(message);
-      setError(errorObj);
-      notifications?.onError?.(message, err);
-    },
-    loading: (message: string) => {
-      notifications?.onLoading?.(message);
-    },
-  };
 
   const mutation = useMutation({
     mutationFn: async (data: z.infer<TSchema>) => {
@@ -110,14 +121,18 @@ export function useComponentSimpleForm<
       return await fetchFn(transformed);
     },
     onMutate: () => {
-      notify.loading("Saving...");
+      notifications?.onLoading?.("Saving...");
+      setError(null);
     },
     onSuccess: (data) => {
-      notify.success("Saved successfully");
-      // form.reset(defaultValues);
+      notifications?.onSuccess?.("Saved successfully");
       onSuccess?.(data);
     },
     onError: (err) => {
+      const errorObj =
+        err instanceof Error ? err : new Error("An error occurred");
+      setError(errorObj);
+      notifications?.onError?.("Failed to save", err);
       handleServerError(err);
     },
   });
@@ -134,105 +149,54 @@ export function useComponentSimpleForm<
   const handleReset = useCallback(() => {
     form.reset(defaultValues);
     setError(null);
-  }, [defaultValues]);
+  }, [form, defaultValues]);
 
   return {
     form,
     handleSubmit,
     handleReset,
     isSubmitting: mutation.isPending,
-    mutation,
     error,
-    setError,
   };
 }
 
-/**
- * Form configuration options
- */
-interface FormOptions<
+// ✅ Base form options
+interface UseBaseFormOptions<
   T extends DocumentBase,
   TSchema extends ZodType<any, ZodTypeDef, any>
 > {
-  // Core configuration
   schema?: TSchema;
   defaultValues?: DefaultValues<z.infer<TSchema>>;
   initialMode?: FormMode;
-
-  // Initial record options
   initialRecord?: T | null;
   recordId: DocumentId | null;
-
-  // Data transformation
   transformToForm?: (
     data: T,
-    meta: {
-      action: "load" | "post" | "reset";
-    }
+    action: "load" | "post" | "reset"
   ) => z.infer<TSchema>;
   transformToApi?: (formData: z.infer<TSchema>) => Partial<T> | FormData;
-
-  // Mode switching behavior
   switchToEditOnCreate?: boolean;
-
-  // API configuration
   apiService?: ApiService<T>;
-
-  // Callback handlers
   onCreateSuccess?: (data: T) => void;
   onUpdateSuccess?: (data: T) => void;
   onLoadSuccess?: (data: T) => void;
-
-  // Notification handlers
   notifications?: NotificationHandlers;
-
-  // Query options
   queryKey?: string;
   invalidateQueriesOnMutate?: boolean;
 }
 
-export const createDefaultApiService = <T extends DocumentBase>({
-  url,
-}: {
-  url: string;
-}): ApiService<T> => ({
-  get: async (id: string) => {
-    return simpleRequest<T>({
-      url: `${url}/${id}/`,
-      method: "GET",
-    });
-  },
-  create: async (data: Omit<T, "id"> | FormData) => {
-    return simpleRequest<T>({
-      url: `${url}/`,
-      method: "POST",
-      body: data,
-    });
-  },
-  update: async (id: string, data: Partial<T> | FormData) => {
-    return simpleRequest<T>({
-      url: `${url}/${id}/`,
-      method: "PATCH",
-      body: data,
-    });
-  },
-});
-
-/**
- * A comprehensive form management hook that integrates with API services,
- * handles different form modes (create, edit, view), and uses TanStack Query mutations
- */
+// ✅ Optimized base form hook
 export function useComponentBaseForm<
   T extends DocumentBase,
   TSchema extends ZodType<any, ZodTypeDef, any>
->(options: FormOptions<T, TSchema>) {
+>(options: UseBaseFormOptions<T, TSchema>): ExtendedFormHook<z.infer<TSchema>> {
   const {
     schema,
     defaultValues,
     initialMode = "create",
     initialRecord = null,
     recordId: initialRecordId,
-    transformToForm = (data, _) => data as unknown as z.infer<TSchema>,
+    transformToForm = (data) => data as unknown as z.infer<TSchema>,
     transformToApi = (formData) => formData as unknown as Partial<T>,
     switchToEditOnCreate = true,
     apiService,
@@ -244,63 +208,59 @@ export function useComponentBaseForm<
     invalidateQueriesOnMutate = true,
   } = options;
 
-  // State management
+  // ✅ Memoized state
   const [formMode, setFormMode] = useState<FormMode>(initialMode);
-  const [recordId, setRecordId] = useState<DocumentId | null>(initialRecordId);
+  const [recordId, setRecordId] = useState<DocumentId | null>(null);
   const [record, setRecord] = useState<T | null>(initialRecord);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // Get query client for cache management
   const queryClient = useQueryClient();
 
-  // Initialize react-hook-form
+  // ✅ Memoized form initialization
   const form = useForm<z.infer<TSchema>>({
     resolver: schema ? zodResolver(schema) : undefined,
     defaultValues,
     mode: "onChange",
   });
 
-  // Notify helpers
-  const notify = {
-    success: (message: string, data?: any) => {
-      notifications?.onSuccess?.(message, data);
-    },
-    error: (message: string, err?: any) => {
-      const errorObj = err instanceof Error ? err : new Error(message);
-      setError(errorObj);
-      notifications?.onError?.(message, err);
-    },
-    loading: (message: string) => {
-      notifications?.onLoading?.(message);
-    },
-  };
+  // ✅ Memoized notification helpers
+  const notify = useMemo(
+    () => ({
+      success: (message: string, data?: any) => {
+        notifications?.onSuccess?.(message, data);
+      },
+      error: (message: string, err?: any) => {
+        const errorObj = err instanceof Error ? err : new Error(message);
+        setError(errorObj);
+        notifications?.onError?.(message, err);
+      },
+      loading: (message: string) => {
+        notifications?.onLoading?.(message);
+      },
+    }),
+    [notifications]
+  );
 
-  // Create mutation
+  // ✅ Optimized mutations with proper error handling
   const createMutation = useMutation({
     mutationFn: async (formData: z.infer<TSchema>) => {
-      if (!apiService) {
-        throw new Error("API service not provided");
-      }
+      if (!apiService) throw new Error("API service not provided");
       const transformedData = transformToApi(formData);
       return await apiService.create(transformedData as Omit<T, "id">);
     },
     onMutate: () => {
       notify.loading("Creating record...");
+      setError(null);
     },
     onSuccess: (createdRecord) => {
       setRecord(createdRecord);
       setRecordId(createdRecord.id);
-
       notify.success("Record created successfully", createdRecord);
 
       if (switchToEditOnCreate) {
         setFormMode("edit");
-        form.reset(
-          transformToForm(createdRecord, {
-            action: "post",
-          })
-        );
+        form.reset(transformToForm(createdRecord, "post"));
       }
 
       if (invalidateQueriesOnMutate) {
@@ -309,28 +269,26 @@ export function useComponentBaseForm<
 
       onCreateSuccess?.(createdRecord);
     },
-    onError: (error: ApiError) => {
-      handleServerError(error, {
-        form,
-      });
+    onError: (error) => {
+      notify.error("Failed to create record", error);
+      handleServerError(error, { form });
     },
   });
 
-  // Update mutation
   const updateMutation = useMutation({
     mutationFn: async (data: z.infer<TSchema>) => {
-      if (!apiService) {
-        throw new Error("API service not provided");
+      if (!apiService || !recordId) {
+        throw new Error("API service or record ID not provided");
       }
       const transformedData = transformToApi(data);
-      return await apiService.update(`${recordId!}`, transformedData);
+      return await apiService.update(String(recordId), transformedData);
     },
     onMutate: () => {
       notify.loading("Updating record...");
+      setError(null);
     },
     onSuccess: (updatedRecord) => {
       setRecord(updatedRecord);
-
       notify.success("Record updated successfully", updatedRecord);
 
       if (invalidateQueriesOnMutate) {
@@ -342,45 +300,49 @@ export function useComponentBaseForm<
 
       onUpdateSuccess?.(updatedRecord);
     },
-    onError: (error: ApiError) => {
-      handleServerError(error, {
-        form,
-      });
+    onError: (error) => {
+      notify.error("Failed to update record", error);
+      handleServerError(error, { form });
     },
   });
 
-  // // Handle form mode changes
-  // useEffect(() => {
-  //   if (resetOnModeChange) {
-  //     if (formMode === "create") {
-  //       form.reset(defaultValues || {});
-  //     } else if (formMode === "edit" && record) {
-  //       form.reset(transformToForm(record, {
-  //         action: "load",
-  //       }));
-  //     }
-  //   }
+  // ✅ Optimized record loading
+  const loadRecord = useCallback(
+    async (id: string): Promise<T> => {
+      if (!apiService) throw new Error("API service not provided");
 
-  //   // Disable form controls in view mode
-  //   if (formMode === "view") {
-  //     Object.keys(form.getValues()).forEach((key) => {
-  //       form.register(key as any, { disabled: true });
-  //     });
-  //   }
-  // }, [formMode, record]);
+      setIsLoading(true);
+      notify.loading("Loading record...");
 
-  // Load record when recordId changes
-  useEffect(() => {
-    if (
-      recordId &&
-      apiService &&
-      (formMode === "edit" || formMode === "view")
-    ) {
-      loadRecord(`${recordId}`).catch((err) =>
-        notify.error("Failed to load record", err)
-      );
-    }
-  }, [recordId, formMode]);
+      try {
+        const data = await apiService.get(id);
+        setRecord(data);
+        setRecordId(data.id);
+
+        if (formMode !== "create") {
+          form.reset(transformToForm(data, "load"));
+        }
+
+        onLoadSuccess?.(data);
+        queryClient.setQueryData([queryKey, id], data);
+        return data;
+      } catch (err) {
+        notify.error("Failed to load record", err);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [
+      formMode,
+      form,
+      transformToForm,
+      onLoadSuccess,
+      queryClient,
+      queryKey,
+      notify,
+    ]
+  );
 
   useEffect(() => {
     if (initialRecordId) {
@@ -389,6 +351,9 @@ export function useComponentBaseForm<
       }
       if (recordId !== initialRecordId) {
         setRecordId(initialRecordId);
+        loadRecord(String(initialRecordId)).catch((err) =>
+          notify.error("Failed to load record", err)
+        );
       }
     } else {
       form.reset(defaultValues || {});
@@ -396,89 +361,32 @@ export function useComponentBaseForm<
     }
   }, [initialRecordId]);
 
-  // API operations
-  const loadRecord = async (id: string): Promise<T> => {
-    if (!apiService) {
-      throw new Error("API service not provided");
-    }
-
-    setIsLoading(true);
-    notify.loading("Loading record...");
-
-    try {
-      const data = await apiService.get(id);
-      setRecord(data);
-      setRecordId(data.id);
-
-      if (formMode !== "create") {
-        form.reset(
-          transformToForm(data, {
-            action: "load",
-          })
-        );
-      }
-
-      onLoadSuccess?.(data);
-
-      // Update cache
-      queryClient.setQueryData([queryKey, id], data);
-
-      return data;
-    } catch (err) {
-      notify.error("Failed to load record", err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSubmit = form.handleSubmit(
-    (data) => {
-      if (formMode === "edit") {
-        updateMutation.mutate(data);
-      } else {
-        createMutation.mutate(data);
-      }
-    },
-    () => {
-      notify.error("Form validation failed");
-    }
+  // ✅ Memoized handlers
+  const handleSubmit = useMemo(
+    () =>
+      form.handleSubmit(
+        (data) => {
+          if (formMode === "edit") {
+            updateMutation.mutate(data);
+          } else {
+            createMutation.mutate(data);
+          }
+        },
+        () => notify.error("Form validation failed")
+      ),
+    [form, formMode, createMutation, updateMutation, notify]
   );
 
-  // Reset form handler
   const handleReset = useCallback(() => {
     if (formMode === "create") {
       form.reset(defaultValues || {});
     } else if (record) {
-      form.reset(
-        transformToForm(record, {
-          action: "reset",
-        })
-      );
+      form.reset(transformToForm(record, "reset"));
     } else {
       form.reset();
     }
-
     setError(null);
-  }, [formMode, record, defaultValues]);
-
-  // Load record handler (can be called manually)
-  const handleLoad = useCallback(
-    async (id?: string): Promise<void> => {
-      const targetId = id || recordId;
-      if (!targetId) {
-        notify.error("No record ID provided");
-        return Promise.reject(new Error("No record ID provided"));
-      }
-
-      try {
-        await loadRecord(`${targetId}`);
-      } catch (err) {
-        return Promise.reject(err);
-      }
-    },
-    [recordId]
-  );
+  }, [formMode, record, defaultValues, form, transformToForm]);
 
   return {
     form,
@@ -487,117 +395,136 @@ export function useComponentBaseForm<
     recordId,
     setRecordId,
     record,
-    isLoading,
     isSubmitting: createMutation.isPending || updateMutation.isPending,
-    isViewMode: formMode === "view",
     error,
-    setError,
     handleSubmit,
     handleReset,
-    handleLoad,
-    loadRecord,
-    createMutation,
-    updateMutation,
-    notify,
   };
 }
 
-// Create a union type for form hooks
-type FormHookUnion<T extends DocumentBase, TSchema extends ZodType<any, ZodTypeDef, any>> =
-  | ReturnType<typeof useComponentBaseForm<T, TSchema>>
-  | ReturnType<typeof useComponentSimpleForm<T, TSchema>>;
+// ✅ Create default API service factory
+export const createDefaultApiService = <T extends DocumentBase>({
+  url,
+}: {
+  url: string;
+}): ApiService<T> => ({
+  get: async (id: string) =>
+    simpleRequest<T>({
+      url: `${url}/${id}`,
+      method: "GET",
+    }) as Promise<T>,
+  create: async (data: Omit<T, "id"> | FormData) =>
+    simpleRequest<T>({
+      url,
+      method: "POST",
+      body: data,
+    }) as Promise<T>,
+  update: async (id: string, data: Partial<T> | FormData) =>
+    simpleRequest<T>({
+      url: `${url}/${id}`,
+      method: "PUT",
+      body: data,
+    }) as Promise<T>,
+});
 
-// Extract common properties from both hook types
-interface BaseFormHookProps {
-  form: UseFormReturn<any>;
-  isSubmitting: boolean;
-  error: Error | null;
-  handleSubmit: (e?: React.BaseSyntheticEvent) => Promise<void>;
-  handleReset: () => void;
+// ✅ Type guards
+function isExtendedFormHook<T extends FieldValues>(
+  hook: BaseFormHook<T> | ExtendedFormHook<T>
+): hook is ExtendedFormHook<T> {
+  return "formMode" in hook;
 }
 
-// Type guard to check if hook has formMode
-function hasFormMode(hook: any): hook is { formMode: FormMode } {
-  return 'formMode' in hook;
-}
-
+// ✅ Component props with better typing
 interface ComponentFormBaseProps<
   T extends DocumentBase,
-  TSchema extends ZodType<any, ZodTypeDef, any> = ZodType<any, ZodTypeDef, any>,
-  TFieldValues extends FieldValues = z.infer<TSchema>
+  TFieldValues extends FieldValues = any
 > {
   formName: string;
-  formHook: FormHookUnion<T, TSchema>;
+  formHook: BaseFormHook<TFieldValues> | ExtendedFormHook<TFieldValues>;
   modal: { visible: boolean; hide: () => void };
   displayType: "dialog" | "drawer";
-  getTitle: (hook: FormHookUnion<T, TSchema>) => string;
+  getTitle: (
+    hook: BaseFormHook<TFieldValues> | ExtendedFormHook<TFieldValues>
+  ) => string;
   isProcessing?: boolean;
   showResetButton?: boolean;
   children:
     | ((form: UseFormReturn<TFieldValues>) => React.ReactNode)
     | React.ReactNode;
-  getSubmitButtonText?: (hook: FormHookUnion<T, TSchema>) => string;
+  getSubmitButtonText?: (
+    hook: BaseFormHook<TFieldValues> | ExtendedFormHook<TFieldValues>
+  ) => string;
+  componentClasses?: ComponentClasses;
 }
 
+// ✅ Optimized component with better performance
 export const ComponentFormBase = <
   T extends DocumentBase,
-  TSchema extends ZodType<any, ZodTypeDef, any> = ZodType<any, ZodTypeDef, any>,
-  TFieldValues extends FieldValues = z.infer<TSchema>
+  TFieldValues extends FieldValues = any
 >({
   formName,
   formHook,
   modal,
   displayType,
-  getTitle: initialGetTitle,
+  getTitle,
   isProcessing = false,
   children,
   getSubmitButtonText,
-}: ComponentFormBaseProps<T, TSchema, TFieldValues>) => {
+  componentClasses,
+}: ComponentFormBaseProps<T, TFieldValues>) => {
+  // ✅ Memoized submit button text
   const submitButtonText = useMemo(() => {
     if (getSubmitButtonText) {
       return getSubmitButtonText(formHook);
     }
-    
-    // Check if hook has formMode property (useComponentBaseForm)
-    if (hasFormMode(formHook)) {
+
+    if (isExtendedFormHook(formHook)) {
       return formHook.formMode === "create" ? "Create" : "Save Changes";
     }
-    
-    // Default for useComponentSimpleForm
+
     return "Submit";
   }, [formHook, getSubmitButtonText]);
 
-  const title = useMemo(() => {
-    return initialGetTitle(formHook);
-  }, [initialGetTitle, formHook]);
+  // ✅ Memoized title
+  const title = useMemo(() => getTitle(formHook), [getTitle, formHook]);
 
-  // Rest of the component remains the same...
+  // ✅ Memoized close handler
+  const handleClose = useCallback(() => {
+    modal.hide();
+    formHook.form.reset();
+  }, [modal, formHook.form]);
+
+  // ✅ Memoized form content
+  const formContent = useMemo(
+    () => (typeof children === "function" ? children(formHook.form) : children),
+    [children, formHook.form]
+  );
+
   if (displayType === "dialog") {
     return (
-      <Dialog
-        open={modal.visible}
-        onOpenChange={(v) => {
-          if (!v) {
-            modal.hide();
-          }
-          formHook.form.reset();
-        }}
-      >
-        <DialogContent className="!max-w-[1000px]">
+      <Dialog open={modal.visible} onOpenChange={(v) => !v && handleClose()}>
+        <DialogContent
+          className={cn(
+            "!max-w-[1000px]",
+            componentClasses?.dialogContent || ""
+          )}
+        >
           <form id={formName} onSubmit={formHook.handleSubmit}>
             <DialogHeader className="text-left">
               <DialogTitle>{title}</DialogTitle>
               <DialogDescription>
-                {"Click save when you are done."}
+                Click save when you are done.
               </DialogDescription>
             </DialogHeader>
             <div className="-mr-4 w-full overflow-y-auto pt-4 pr-4">
-              {typeof children === "function"
-                ? children(formHook.form)
-                : children}
+              {formContent}
             </div>
             <DialogFooter>
-              <Button type="submit" form={formName} disabled={isProcessing}>
+              <Button
+                type="submit"
+                form={formName}
+                disabled={isProcessing || formHook.isSubmitting}
+              >
                 {submitButtonText}
               </Button>
             </DialogFooter>
@@ -605,39 +532,30 @@ export const ComponentFormBase = <
         </DialogContent>
       </Dialog>
     );
-  } else if (displayType === "drawer") {
-    return (
-      <Sheet
-        open={modal.visible}
-        onOpenChange={(v) => {
-          if (!v) {
-            modal.hide();
-          }
-          formHook.form.reset();
-        }}
-      >
-        <SheetContent className="flex flex-col">
-          <form onSubmit={formHook.handleSubmit}>
-            <SheetHeader className="text-left">
-              <SheetTitle>{title}</SheetTitle>
-              <SheetDescription>
-                {"Click save when you are done."}
-              </SheetDescription>
-            </SheetHeader>
-            {typeof children === "function"
-              ? children(formHook.form)
-              : children}
-            <SheetFooter className="gap-2">
-              <SheetClose asChild>
-                <Button variant="outline">Close</Button>
-              </SheetClose>
-              <Button form={formName} type="submit" disabled={isProcessing}>
-                {submitButtonText}
-              </Button>
-            </SheetFooter>
-          </form>
-        </SheetContent>
-      </Sheet>
-    );
   }
+
+  return (
+    <Sheet open={modal.visible} onOpenChange={(v) => !v && handleClose()}>
+      <SheetContent className="flex flex-col">
+        <form onSubmit={formHook.handleSubmit} className="flex flex-col h-full">
+          <SheetHeader className="text-left">
+            <SheetTitle>{title}</SheetTitle>
+            <SheetDescription>Click save when you are done.</SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto py-4">{formContent}</div>
+          <SheetFooter className="gap-2">
+            <SheetClose asChild>
+              <Button variant="outline">Close</Button>
+            </SheetClose>
+            <Button
+              type="submit"
+              disabled={isProcessing || formHook.isSubmitting}
+            >
+              {submitButtonText}
+            </Button>
+          </SheetFooter>
+        </form>
+      </SheetContent>
+    </Sheet>
+  );
 };

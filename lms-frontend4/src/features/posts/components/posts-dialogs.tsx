@@ -84,8 +84,8 @@ export const PostEditNiceDialog = NiceModal.create<
       formHook={formHook}
       modal={modal}
       displayType="dialog"
-      getTitle={(hook) =>
-        hook.formMode === "edit" ? "Edit Post" : "Create Post"
+      getTitle={(hook: any) =>
+        hook.formMode === "edit" ? `Edit Post [#${hook.record?.id}]` : "Create Post"
       }
       formName="posts-form"
     >

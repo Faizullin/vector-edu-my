@@ -12,20 +12,19 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { URLS } from "@/config/constants";
 import { useAuth } from "@/context/auth-context";
 import { FirebaseAuthService } from "@/lib/firebase/auth";
-import { useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback } from "react";
 
 export function ProfileDropdown() {
   const { user } = useAuth();
+  const router = useRouter();
   const handleSignOut = useCallback(async () => {
     await FirebaseAuthService.signOut();
+    router.push(URLS.LOGIN);
   }, []);
-  const logoName = useMemo(() => {
-    if (!user) return "";
-    return user.displayName?.charAt(0).toUpperCase() || "";
-  }, [user]);
-
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>

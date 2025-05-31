@@ -1,4 +1,4 @@
-export default function debounce(fn: (..._: unknown[]) => void, delay = 250) {
+export default function debounce(fn: (..._: any[]) => void, delay = 250) {
   let timeout: NodeJS.Timeout;
 
   return (...args: unknown[]) => {

@@ -14,16 +14,20 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { URLS } from "@/config/constants";
 import { useAuth } from "@/context/auth-context";
 import { FirebaseAuthService } from "@/lib/firebase/auth";
 import { ChevronsUpDown, LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
 export function NavUser() {
   const { user } = useAuth();
+  const router = useRouter();
   const { isMobile } = useSidebar();
   const handleSignOut = useCallback(async () => {
     await FirebaseAuthService.signOut();
+    router.push(URLS.LOGIN);
   }, []);
   return (
     <SidebarMenu>

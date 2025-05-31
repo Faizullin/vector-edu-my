@@ -1,8 +1,7 @@
+import { ApiError } from "@/lib/simpleRequest";
 import type { UseFormReturn } from "react-hook-form";
 import { toast, type ExternalToast } from "sonner";
 import { Log } from "./log";
-
-type ApiError = any;
 
 type titleT = (() => React.ReactNode) | React.ReactNode;
 export function showToast(
@@ -47,16 +46,19 @@ type ServerError = {
 };
 
 export function getApiErrorData(error: ApiError) {
-  const errorBody = error.body as any;
-  if (error.message === "Bad Request") {
-    if (errorBody["type"] === "validation_error") {
-      const errorBody = error.body as ValidationError<string>;
-      return errorBody;
+  const errorBody = error.data as any;
+  if (error.message.startsWith("HTTP: ")) {
+    const errorMessageSliced = error.message.slice(6);
+    if (errorMessageSliced === "Bad Request") {
+      if (errorBody["type"] === "validation_error") {
+        const errorBody = error.data as ValidationError<string>;
+        return errorBody;
+      }
     }
-  }
-  if (error.message === "Internal Server Error") {
-    if (errorBody["type"] === "server_error") {
-      return errorBody as ServerError;
+    if (errorMessageSliced === "Internal Server Error") {
+      if (errorBody["type"] === "server_error") {
+        return errorBody as ServerError;
+      }
     }
   }
   if (errorBody.error) {
@@ -80,8 +82,8 @@ export function handleServerError(
   const { form } = options;
   const displayType = options.displayType || "toast";
   if (error instanceof ApiError) {
+    Log.error("handleServerError", error.toJSON());
     const errorBody = getApiErrorData(error);
-    Log.error("handleServerError", error, error.body);
     if (errorBody?.type === "validation_error") {
       if (displayType === "toast") {
         showToast("error", {

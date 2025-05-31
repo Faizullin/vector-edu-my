@@ -1,48 +1,86 @@
-import type { QueryParams } from "@/components/datatable/types";
+import { QueryParams } from "@/components/datatable/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { simpleRequest } from "@/lib/simpleRequest";
 import { cn } from "@/lib/utils";
 import { DocumentBase, PaginatedData } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import {
+  AccessorColumnDef,
+  ColumnFiltersState,
+  DisplayColumnDef,
   getCoreRowModel,
-  type AccessorColumnDef,
-  type DisplayColumnDef,
-  type TableOptions,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  RowSelectionState,
+  TableOptions,
+  PaginationState as TanstackPaginationState,
+  SortingState as TanstackSortingState,
+  useReactTable,
 } from "@tanstack/react-table";
-import { useEffect, useMemo, useState } from "react";
-import { useDatatable } from "./use-datatable";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type MyColumn<T> = AccessorColumnDef<T, any> | DisplayColumnDef<T, any>;
-type UseResourceProps<T extends DocumentBase> = {
+export type UseResourceProps<T extends DocumentBase> = {
   name: string;
   url: string;
   columns: Array<MyColumn<T>>;
-  fetchFn?: (params: QueryParams) => Promise<PaginatedData<T>>;
+  fetchFn?: (url: string, params: QueryParams) => Promise<PaginatedData<T>>;
   useRowSelection?: boolean;
   enabled?: boolean;
   transformToApiParams?: <M = any>(data: M) => M;
   reactTableOptions?: Partial<TableOptions<T>>;
 };
 
-export function useResource<T extends DocumentBase>({
+export const useResource = <T extends DocumentBase>({
   name,
   url,
   columns: initialColumns,
-  fetchFn = (params) =>
-    simpleRequest<PaginatedData<T>>({
-      url,
+  fetchFn = async (url, params) => {
+    return await (simpleRequest<PaginatedData<T>>({
+      url: url,
       method: "GET",
       params,
-    }),
+    }) as Promise<PaginatedData<T>>);
+  },
   useRowSelection = false,
-  enabled = true,
+  reactTableOptions = {},
   transformToApiParams = (data) => data,
-  reactTableOptions,
-}: UseResourceProps<T>) {
-  const [data, setData] = useState<T[]>([]);
+  enabled = true,
+}: UseResourceProps<T>) => {
+  const [isInitialized, setIsInitialized] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
+  const [queryParams, setQueryParams] = useState<QueryParams>({});
 
+  // Separate state tracking to avoid circular dependency
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState<string>("");
+  const [sorting, setSorting] = useState<TanstackSortingState>([]);
+  const [pagination, setPagination] = useState<TanstackPaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  const query = useQuery({
+    queryKey: [name, queryParams],
+    queryFn: () => fetchFn(url, queryParams as any),
+    enabled: isInitialized,
+    retry: 2,
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+    gcTime: 1000 * 60 * 10, // 10 minutes garbage collection
+  });
+
+  useEffect(() => {
+    if (query.data) {
+      setTotalItems(query.data.count);
+    }
+  }, [query.data]);
+  useEffect(() => {
+    setIsInitialized(enabled);
+  }, [enabled]);
+
+  const calculatedPageCount = Math.ceil(totalItems / pagination.pageSize);
   const columns = useMemo(() => {
     const newCols = initialColumns;
     if (useRowSelection) {
@@ -83,27 +121,58 @@ export function useResource<T extends DocumentBase>({
     return newCols;
   }, [initialColumns, useRowSelection]);
 
-  const datatable = useDatatable<T>({
-    columns,
-    data,
-    totalItems,
-    getCoreRowModel: getCoreRowModel(),
-    manualPagination: true,
-    manualSorting: true,
-    manualFiltering: true,
-    enableGlobalFilter: true,
-    ...reactTableOptions,
-  });
+  const tableConfig = useMemo(
+    () => ({
+      data: query.data?.results || [],
+      columns,
+      state: {
+        rowSelection,
+        columnFilters,
+        globalFilter,
+        sorting,
+        pagination,
+      },
+      manualPagination: true,
+      manualSorting: true,
+      manualFiltering: true,
+      enableGlobalFilter: true,
+      enableRowSelection: true,
+      pageCount: calculatedPageCount,
+      onRowSelectionChange: setRowSelection,
+      onColumnFiltersChange: setColumnFilters,
+      onGlobalFilterChange: setGlobalFilter,
+      onSortingChange: setSorting,
+      onPaginationChange: setPagination,
+      getCoreRowModel: getCoreRowModel(),
+      getFilteredRowModel: getFilteredRowModel(),
+      getPaginationRowModel: getPaginationRowModel(),
+      getSortedRowModel: getSortedRowModel(),
+      ...reactTableOptions,
+    }),
+    [
+      query.data?.results,
+      columns,
+      rowSelection,
+      columnFilters,
+      globalFilter,
+      sorting,
+      pagination,
+      calculatedPageCount,
+      reactTableOptions,
+    ]
+  );
+  const table = useReactTable(tableConfig);
 
-  const queryParams = useMemo(() => {
+  // ✅ Fix: Use individual state values instead of table.getState()
+  useEffect(() => {
     const { pagination, sorting, columnFilters, globalFilter } =
-      datatable.table.getState();
+      table.getState();
     const data: any = {
       page: pagination.pageIndex + 1,
       page_size: pagination.pageSize,
     };
+
     if (sorting.length > 0) {
-      data["ordering"] = sorting[0].id;
       data["ordering"] = sorting[0].desc ? "-" + sorting[0].id : sorting[0].id;
     }
 
@@ -117,36 +186,27 @@ export function useResource<T extends DocumentBase>({
         data[key] = value;
       }
     });
-
     if (globalFilter) {
       data["search"] = globalFilter;
     }
-    return {
+    setQueryParams({
       ...transformToApiParams(data),
-    } as QueryParams;
-  }, [datatable.table.getState()]);
+    } as QueryParams);
+  }, [pagination, sorting, columnFilters, globalFilter]); // ✅ Specific dependencies
 
-  const query = useQuery<PaginatedData<T>>({
-    queryKey: [name, queryParams],
-    queryFn: () => fetchFn(queryParams),
-    retry: 2,
-    enabled,
-  });
+  // Helper functions stay the same...
+  const getSelectedRows = useCallback(() => {
+    return table.getFilteredSelectedRowModel().rows;
+  }, [table]);
 
-  useEffect(() => {
-    if (query.data) {
-      setData(query.data.results);
-      setTotalItems(query.data.count);
-    }
-  }, [query.data]);
+  const resetRowSelection = useCallback(() => {
+    setRowSelection({});
+  }, []);
 
-  return useMemo(
-    () => ({
-      query,
-      data,
-      datatable,
-      totalItems,
-    }),
-    [query, datatable, data, totalItems]
-  );
-}
+  return {
+    datatable: { table, getSelectedRows, resetRowSelection, setColumnFilters },
+    query,
+    isLoading: query.isLoading || !isInitialized,
+    data: query.data?.results || [],
+  };
+};

@@ -11,12 +11,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { URLS } from "@/config/constants";
 import { FirebaseAuthError, FirebaseAuthService } from "@/lib/firebase/auth";
 import { cn } from "@/lib/utils";
-import { handleServerError, showToast } from "@/utils/handle-server-error";
+import { showToast } from "@/utils/handle-server-error";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { type HTMLAttributes } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -43,6 +45,13 @@ const formSchema = z.object({
 });
 
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
+  // const backendLoginMutation = useMutation({
+  //   mutationFn: async (uid: string) => {
+  //     return await JwtAuthService.loginWithFirebaseUid(uid);
+  //   },
+  // });
+  const router = useRouter();
+
   const loginMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
       return await FirebaseAuthService.signInWithEmailAndPassword(
@@ -54,7 +63,17 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
 
   const googleLoginMutation = useMutation({
     mutationFn: async () => {
-      return await FirebaseAuthService.signInWithGoogle();
+      const response = await FirebaseAuthService.signInWithGoogle();
+      if (!response) {
+        return;
+      }
+      // await backendLoginMutation.mutateAsync(response.user.uid);
+      return response;
+    },
+    onSuccess(data) {
+      if (data) {
+        router.push(URLS.HOME);
+      }
     },
   });
 

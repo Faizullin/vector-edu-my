@@ -2,6 +2,8 @@
 
 import { createSession } from "@/actions/auth-actions";
 import { FirebaseAuthService } from "@/lib/firebase/auth";
+import { JwtAuthService } from "@/lib/firebase/jwt-auth";
+import { Log } from "@/utils/log";
 import { User } from "firebase/auth";
 import {
   createContext,
@@ -31,11 +33,27 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
     // Subscribe to the authentication state changes
     const unsubscribe = FirebaseAuthService.onAuthStateChanged(async (user) => {
       if (user) {
+        let initialJwtToken = await JwtAuthService.getJWTToken();
+        if (!initialJwtToken) {
+          const token = await user.getIdToken();
+          Log.info("Renewing JWT token with Firebase ID token:");
+          initialJwtToken = (await JwtAuthService.loginWithFirebaseToken(
+            token
+          ))!.message.token;
+        }
+        await createSession({
+          uid: user.uid,
+          token: initialJwtToken,
+        });
         // User is signed in
         setUser(user);
+        // setToken(token!);
+        // await JwtAuthService.setJWTToken(token!);
       } else {
         // User is signed out
         setUser(null);
+        // setToken(null);
+        // await JwtAuthService.setJWTToken(null);
       }
       // Set loading to false once authentication state is determined
       setLoading(false);

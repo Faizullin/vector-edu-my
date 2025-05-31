@@ -1,5 +1,5 @@
-import type { FieldItem, PaginatedData } from "@/client";
-import { simpleRequest } from "@/client/core/simpleRequest";
+import { simpleRequest } from "@/lib/simpleRequest";
+import type { FieldItem, PaginatedData } from "@/types";
 import debounce from "@/utils/debounce";
 import { useCallback, type ComponentProps } from "react";
 import AsyncSelect from "react-select/async";
@@ -25,7 +25,7 @@ export const MultiselectLinkInputField = <T,>(
       return simpleRequest<PaginatedData<T>>({
         method: "GET",
         url: props.url,
-        query: parseParams(inputValue),
+        params: parseParams(inputValue),
       });
     },
     [props.parseParams, props.url]
@@ -33,7 +33,7 @@ export const MultiselectLinkInputField = <T,>(
   const loadOptionsDebounced = useCallback(
     debounce((inputValue: string, callback: (options: any) => void) => {
       fetchOptions(inputValue).then((response) => {
-        const parsedResponse = props.parseResponse(response);
+        const parsedResponse = props.parseResponse(response!);
         callback(parsedResponse);
       });
     }, 500),

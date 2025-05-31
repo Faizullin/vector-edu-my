@@ -11,6 +11,7 @@ import {
 import { createSession, removeSession } from "@/actions/auth-actions";
 import { Log } from "@/utils/log";
 import { firebaseAuth } from "./config";
+import { JwtAuthService } from "./jwt-auth";
 
 // export interface FirebaseAuthError {
 //   code: "auth/operation-not-allowed";
@@ -31,7 +32,9 @@ export class FirebaseAuthService {
    * @param callback - Callback function to handle the auth user.
    */
   static onAuthStateChanged(callback: (authUser: User | null) => void) {
-    return _onAuthStateChanged(firebaseAuth, callback);
+    return _onAuthStateChanged(firebaseAuth, async (user) => {
+      callback(user);
+    });
   }
 
   /**
@@ -46,11 +49,21 @@ export class FirebaseAuthService {
       if (!result || !result.user) {
         throw new Error("Google sign-in failed");
       }
-      await createSession(result.user.uid);
+      const userToken = await result.user.getIdToken();
+      const newJwtToken = (
+        await JwtAuthService.loginWithFirebaseToken(userToken)
+      )?.message.token;
+      if (!newJwtToken) {
+        throw new Error("Failed to obtain JWT token from Firebase token");
+      }
+      await createSession({
+        uid: result.user.uid,
+        token: newJwtToken,
+      });
+      JwtAuthService.setJWTToken(newJwtToken);
       return result;
     } catch (error) {
       Log.error("Error signing in with Google", error);
-      throw error;
     }
   }
 
@@ -61,6 +74,7 @@ export class FirebaseAuthService {
     try {
       await firebaseAuth.signOut();
       await removeSession();
+      JwtAuthService.setJWTToken(null);
     } catch (error) {
       Log.error("Error signing out", error);
       throw error;
@@ -83,7 +97,7 @@ export class FirebaseAuthService {
       if (!result || !result.user) {
         throw new Error("Email/password sign-in failed");
       }
-      await createSession(result.user.uid);
+      // await createSession(result.user.uid);
       return result;
     } catch (error) {
       Log.error("Error signing in with email and password", error);

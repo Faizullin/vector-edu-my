@@ -1,4 +1,4 @@
-import { DocumentBase } from "@/types";
+import { DocumentBase, DocumentId } from "@/types";
 
 interface Author extends DocumentBase {
   username: string;
@@ -9,6 +9,7 @@ export interface PostDocument extends DocumentBase {
   author: Author;
   publication_status: 1 | 0;
   post_type: string;
+  object_id: DocumentId;
 }
 
 export const postsPublicationStatusOptions = [

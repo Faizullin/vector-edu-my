@@ -1,7 +1,15 @@
 import Header from "@/components/layout/header";
 import { ProfileDropdown } from "@/components/layout/profile-dropdown";
 import { Search } from "@/components/layout/search";
-import Posts from "@/features/posts";
+import Lessons from "@/features/lessons";
+
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Lessons",
+  description: "Manage your lessons",
+  keywords: ["lessons", "education", "courses"],
+};
 
 export default function Page() {
   return (
@@ -13,7 +21,7 @@ export default function Page() {
           <ProfileDropdown />
         </div>
       </Header>
-      <Posts />
+      <Lessons />
     </>
   );
 }

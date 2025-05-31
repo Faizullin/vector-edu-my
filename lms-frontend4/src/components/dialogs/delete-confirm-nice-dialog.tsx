@@ -8,16 +8,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import NiceModal, {
-  type NiceModalHandler,
   type NiceModalHocPropsExtended,
 } from "@/context/nice-modal-context";
 import { cn } from "@/lib/utils";
+import { showComponentNiceDialog } from "@/utils/nice-modal";
 import { Button } from "../ui/button";
-
-export interface DeleteConfirmNiceDialogResolve {
-  modal: NiceModalHandler;
-  result: boolean;
-}
 
 interface ConfirmDialogProps {
   title: React.ReactNode;
@@ -99,3 +94,11 @@ export const DeleteConfirmNiceDialog = NiceModal.create<
     </AlertDialog>
   );
 });
+
+export const showDeleteConfirmNiceDialog = (args?: ConfirmDialogProps) => {
+  return showComponentNiceDialog(DeleteConfirmNiceDialog, {
+    args,
+  }) as Promise<{
+    result: boolean;
+  }>;
+};

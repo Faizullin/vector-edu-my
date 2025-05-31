@@ -1,20 +1,19 @@
 "use client";
 
-import { DatatablePagePanel } from "@/components/datatable";
-import { DataTableRowActions } from "@/components/datatable/data-table-row-actions";
+import Datatable, { ActionRegistry } from "@/components/datatable";
 import LongText from "@/components/datatable/long-text";
-import { DeleteConfirmNiceDialog } from "@/components/dialogs/delete-confirm-nice-dialog";
+import { showDeleteConfirmNiceDialog } from "@/components/dialogs/delete-confirm-nice-dialog";
 import { Main } from "@/components/layout/main";
 import { Badge } from "@/components/ui/badge";
-import NiceModal from "@/context/nice-modal-context";
-import { useResource } from "@/hooks/use-resource";
+import { simpleRequest } from "@/lib/simpleRequest";
 import { cn } from "@/lib/utils";
 import { DocumentId } from "@/types";
 import { showToast } from "@/utils/handle-server-error";
-import { useMutation } from "@tanstack/react-query";
+import { showComponentNiceDialog } from "@/utils/nice-modal";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
-import { PlusIcon } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { useMemo } from "react";
 import { PostEditNiceDialog } from "./components/posts-dialogs";
 import {
   postsPublicationStatusOptions,
@@ -31,13 +30,87 @@ const publicationStatusTypes = new Map<
   [0, "bg-neutral-300/40 border-neutral-300"],
 ]);
 
+const queryKey = "posts";
+
 export default function Posts() {
+  const queryClient = useQueryClient();
   const deleteMutation = useMutation({
     mutationFn: (id: DocumentId) =>
-      fetch(`/resources/posts/${id}/`, {
+      simpleRequest({
+        url: `/resources/posts/${id}`,
         method: "DELETE",
       }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      showToast("success", {
+        message: "Post deleted successfully",
+      });
+    },
   });
+  const actions: ActionRegistry<PostDocument> = useMemo(
+    () => ({
+      create: {
+        label: "Add",
+        callback: () => {
+          showComponentNiceDialog(PostEditNiceDialog);
+        },
+        icon: <Plus className="mr-2 h-4 w-4" />,
+        renderType: "panel",
+      },
+      // export: {
+      //   label: "Export",
+      //   callback: (_, selectedItems) => {
+      //     showToast("success", {
+      //       message: `Exporting ${selectedItems?.length || 0} items`,
+      //     });
+      //   },
+      //   icon: <FileDown className="mr-2 h-4 w-4" />,
+      //   renderType: "panel",
+      //   variant: "outline",
+      // },
+      edit: {
+        label: "Edit",
+        callback: (item) => {
+          showComponentNiceDialog(PostEditNiceDialog, {
+            recordId: item!.id,
+          });
+        },
+        icon: <Pencil className="h-4 w-4" />,
+        renderType: "row",
+      },
+      delete: {
+        label: "Delete",
+        callback: (item) => {
+          showDeleteConfirmNiceDialog().then(({ result }) => {
+            if (result) {
+              deleteMutation.mutateAsync(item!.id);
+            }
+          });
+        },
+        icon: <Trash2 className="h-4 w-4" />,
+        renderType: "row",
+        loading: deleteMutation.isPending,
+      },
+      // bulkDelete: {
+      //   label: "Bulk Delete",
+      //   callback: (_, selectedItems) => {
+      //     if (
+      //       selectedItems?.length &&
+      //       window.confirm(`Delete ${selectedItems.length} items?`)
+      //     ) {
+      //       selectedItems.forEach((item) => deleteMutation.mutate(item.id));
+      //     }
+      //   },
+      //   renderType: "menu",
+      //   variant: "destructive",
+      // },
+    }),
+    [deleteMutation]
+  );
+  const topbar = {
+    title: "Posts",
+    subtitle: "Manage your posts",
+  };
   const columns = useMemo(() => {
     return [
       col.accessor("id", {
@@ -105,73 +178,31 @@ export default function Posts() {
       }),
       col.display({
         id: "actions",
-        cell: ({ row }) => {
-          return (
-            <DataTableRowActions
-              row={row}
-              defaultActions={{
-                edit: {
-                  callback: ({ row }) => {
-                    NiceModal.show(PostEditNiceDialog, {
-                      recordId: row.original.id,
-                      record: row.original,
-                    });
-                  },
-                },
-                delete: {
-                  callback: ({ row }) => {
-                    NiceModal.show(DeleteConfirmNiceDialog, {}).then(
-                      ({ result }: any) => {
-                        if (result) {
-                          showToast("error", {
-                            message: "Post deleted successfully",
-                            data: {
-                              duration: 2000,
-                            },
-                          });
-                          deleteMutation
-                            .mutateAsync(row.original.id)
-                            .then(() => {
-                              resource.query.refetch();
-                            });
-                        }
-                      }
-                    );
-                  },
-                },
-              }}
-            />
-          );
-        },
+        header: "Actions",
+        cell: ({ row }) => (
+          <Datatable.RowActions
+            item={row.original}
+            actionNames={["edit", "delete"]}
+          />
+        ),
       }),
     ];
   }, []);
-  const resource = useResource<PostDocument>({
-    name: "posts",
-    url: `/resources/posts`,
-    columns,
-  });
-  const handleCreate = useCallback(() => {
-    NiceModal.show(PostEditNiceDialog, {});
-  }, []);
   return (
     <Main>
-      <DatatablePagePanel
-        resource={resource}
-        topbar={{
-          title: "Post List",
-          subtitle: "Manage your posts.",
+      <Datatable.Root<PostDocument>
+        resource={{
+          name: "posts",
+          url: `/resources/posts`,
+          columns,
         }}
-        actions={[
-          {
-            id: "add",
-            label: "Add",
-            renderType: "panel",
-            callback: handleCreate,
-            shortcutIcon: <PlusIcon />,
-          },
-        ]}
-      />
+        actions={actions}
+        topbar={topbar}
+      >
+        <Datatable.Panel panelActions={["create"]}>
+          <Datatable.Table />
+        </Datatable.Panel>
+      </Datatable.Root>
     </Main>
   );
 }

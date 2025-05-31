@@ -41,7 +41,7 @@ export const sidebarData: SidebarData = {
         // },
         {
           title: "Posts",
-          href: "/posts",
+          href: "/dashboard/posts",
           icon: BookIcon,
         },
         // {
@@ -52,7 +52,7 @@ export const sidebarData: SidebarData = {
         // },
         {
           title: "Users",
-          href: "/users",
+          href: "/dashboard/users",
           icon: UserIcon,
         },
         {
@@ -61,11 +61,11 @@ export const sidebarData: SidebarData = {
           items: [
             {
               title: "Batches",
-              href: "/lessons/batches",
+              href: "/dashboard/lessons/batches",
             },
             {
               title: "Lessons",
-              href: "/lessons/lessons",
+              href: "/dashboard/lessons/lessons",
             },
             // {
             //   title: "Lesson Categories",
@@ -76,7 +76,7 @@ export const sidebarData: SidebarData = {
         },
         {
           title: "Reports",
-          href: "/reports",
+          href: "/dashboard/reports",
           icon: ListIcon,
         },
       ],
