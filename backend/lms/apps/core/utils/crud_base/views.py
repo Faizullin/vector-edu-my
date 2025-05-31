@@ -3,9 +3,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from lms.apps.core.utils.exceptions import StandardizedViewMixin
 from rest_framework import permissions, viewsets, filters, status
 from rest_framework import pagination
-from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 
 
 class CustomPagination(pagination.PageNumberPagination):
@@ -14,12 +14,16 @@ class CustomPagination(pagination.PageNumberPagination):
     max_page_size = 100
 
 
-class BaseListApiView(StandardizedViewMixin, viewsets.ModelViewSet):
-    authentication_classes = (SessionAuthentication,)
-    permission_classes = (
-        permissions.IsAuthenticated,
-        permissions.IsAdminUser,
-    )
+class AuthControlMixin:
+    pass
+    # authentication_classes = (TokenAuthentication, SessionAuthentication,)
+    # permission_classes = [
+    #     permissions.IsAuthenticated,
+    #     permissions.IsAdminUser,
+    # ]
+
+
+class BaseListApiView(AuthControlMixin, StandardizedViewMixin, viewsets.ModelViewSet):
     pagination_class = CustomPagination
     filter_backends = [
         DjangoFilterBackend,
@@ -35,14 +39,6 @@ class BaseListApiView(StandardizedViewMixin, viewsets.ModelViewSet):
             self.pagination_class = None
 
         return super().list(request, *args, **kwargs)
-
-
-class AuthControlMixin:
-    authentication_classes = (SessionAuthentication,)
-    permission_classes = [
-        permissions.IsAuthenticated,
-        permissions.IsAdminUser,
-    ]
 
 
 class BaseApiViewSet(AuthControlMixin, StandardizedViewMixin, viewsets.ModelViewSet):

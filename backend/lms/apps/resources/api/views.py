@@ -60,9 +60,6 @@ class ResourcesPostViewSet(BaseApiViewSet):
 class TagListAPIView(BaseListApiView):
     serializer_class = TagSerializer
     search_fields = ["title"]
-    authentication_classes = [
-        SessionAuthentication,
-    ]
 
     def get_queryset(self):
         queryset = Tag.objects.all()

@@ -12,7 +12,8 @@ from rest_framework.views import APIView
 from lms.apps.attachments.models import Attachment
 from lms.apps.core.utils.api_actions import BaseAction, BaseActionException
 from .serializers import BaseAttachmentSerializer, BaseAttachmentUploadSerializer
-from rest_framework.authentication import SessionAuthentication
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+
 
 
 class BaseCustomPagination(pagination.PageNumberPagination):
@@ -29,7 +30,7 @@ class BaseAttachmentListAPIView(generics.ListAPIView):
     ordering_fields = ["id", "created_at", "updated_at"]
 
     authentication_classes = [
-        SessionAuthentication,
+        TokenAuthentication,
     ]
 
     class BaseAttachmentFilter(FilterSet):
@@ -56,9 +57,6 @@ class BaseAttachmentListAPIView(generics.ListAPIView):
 
 
 class BaseAttachmentUploadAPIView(BaseApiView):
-    authentication_classes = [
-        SessionAuthentication,
-    ]
 
     def post(self, request):
         serializer = BaseAttachmentUploadSerializer(data=request.data)

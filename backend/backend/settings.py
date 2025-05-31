@@ -101,7 +101,6 @@ print("Firebase admin is initialized")
 # Database
 
 if RUNNING_FROM_DOCKER:
-    print("USING POSTGRESQL DATABASE")
     DATABASES = {
         "default": {
             "ENGINE": 'django.db.backends.postgresql',
@@ -114,7 +113,6 @@ if RUNNING_FROM_DOCKER:
     }
 
 else:
-    print("USING SQLITE DATABASE")
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

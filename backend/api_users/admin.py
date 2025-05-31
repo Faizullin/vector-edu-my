@@ -2,6 +2,11 @@ from django.contrib import admin
 from backend.admin import UniversalAdmin
 from .models import *
 
+# @admin.register(Token)
+# class TokenAdmin(UniversalAdmin):
+#     list_display = ('user', 'key', 'created')
+#     search_fields = ('user__email', 'key')
+#     list_filter = ('user', 'created')
 
 @admin.register(UserModel)
 class UserModelAdmin(UniversalAdmin):

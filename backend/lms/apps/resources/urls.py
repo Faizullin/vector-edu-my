@@ -43,7 +43,7 @@ urlpatterns = [
     path("", include(router.urls)),
     path("", include(components_router.urls)),
     path(
-        "api/v1/lms/resources/posts/edit-content/lessons2/action",
+        "api/v1/lms/resources/posts/edit-content/lessons2/action/",
         lesson_page_editor_api_views.ResourcesPostEditContentActionAPIView.as_view(),
         name="resources-post-edit-content-action-api",
     ),
