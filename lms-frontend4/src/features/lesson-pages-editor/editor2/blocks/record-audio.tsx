@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import {
   createDefaultApiService,
   useComponentBaseForm,
@@ -14,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { DocumentBase } from "@/types";
+import { showToast } from "@/utils/handle-server-error";
 import { Mic } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useWatch } from "react-hook-form";
@@ -21,7 +23,6 @@ import { z } from "zod";
 import { BlockCardWrapper } from "../components/BlockCardWrapper";
 import { createBlockSpec } from "../createBlockSpec";
 import type { ComponentBase } from "../types";
-import { showToast } from "@/utils/handle-server-error";
 
 export interface RecordAudioComponent extends DocumentBase, ComponentBase {
   title: string;

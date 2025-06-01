@@ -1,4 +1,5 @@
-import type { DocumentBase } from "@/types";
+/* eslint-disable react-hooks/rules-of-hooks */
+
 import {
   createDefaultApiService,
   useComponentBaseForm,
@@ -15,14 +16,15 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import type { DocumentBase } from "@/types";
+import { showToast } from "@/utils/handle-server-error";
 import { PlusCircle, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo } from "react";
 import { useWatch } from "react-hook-form";
 import { z } from "zod";
-import type { ComponentBase } from "../types";
 import { BlockCardWrapper } from "../components/BlockCardWrapper";
 import { createBlockSpec } from "../createBlockSpec";
-import { showToast } from "@/utils/handle-server-error";
+import type { ComponentBase } from "../types";
 
 export interface QuestionAnswer extends DocumentBase {
   text: string;

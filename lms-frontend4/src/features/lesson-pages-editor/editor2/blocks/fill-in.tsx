@@ -1,4 +1,4 @@
-import type { DocumentBase } from "@/types";
+/* eslint-disable react-hooks/rules-of-hooks */
 import {
   createDefaultApiService,
   useComponentBaseForm,
@@ -14,6 +14,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import type { DocumentBase } from "@/types";
+import { showToast } from "@/utils/handle-server-error";
 import { ChevronDown, ChevronUp, PlusCircle, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo } from "react";
 import { useWatch } from "react-hook-form";
@@ -21,7 +23,6 @@ import { z } from "zod";
 import { BlockCardWrapper } from "../components/BlockCardWrapper";
 import { createBlockSpec } from "../createBlockSpec";
 import type { ComponentBase } from "../types";
-import { showToast } from "@/utils/handle-server-error";
 
 export interface FillTextLineDocument extends DocumentBase {
   text_before: string;

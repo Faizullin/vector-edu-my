@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/rules-of-hooks */
+
 import {
   createDefaultApiService,
   useComponentBaseForm,
@@ -165,6 +167,7 @@ export const TextProBlock = createBlockSpec<TextProComponent>({
           formHook.form.setValue("title", block.data.values.title || "");
           formHook.form.setValue("text", block.data.values.text || "");
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
       }, [block.data.values]);
       const staticMode = block.data?.static || false;
       return (

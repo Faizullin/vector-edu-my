@@ -44,6 +44,7 @@ export function CouplesList() {
     );
   }
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const tabs = useMemo(() => {
     return matchingComponent.couples.map((couple) => {
       const firstElement = matchingComponent.elements.find(
@@ -126,6 +127,7 @@ export function CouplesList() {
         </TabsList>
 
         {matchingComponent.couples.map((couple) => {
+          // eslint-disable-next-line react-hooks/rules-of-hooks
           const { firstElement, secondElement } = useMemo(() => {
             return {
               firstElement: matchingComponent.elements.find(

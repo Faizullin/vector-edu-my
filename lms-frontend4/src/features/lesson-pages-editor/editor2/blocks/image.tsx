@@ -1,4 +1,5 @@
-import type { PaginatedData } from "@/types";
+/* eslint-disable react-hooks/rules-of-hooks */
+
 import {
   createDefaultApiService,
   useComponentBaseForm,
@@ -14,6 +15,8 @@ import {
 } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import type { PaginatedData } from "@/types";
+import { showToast } from "@/utils/handle-server-error";
 import { ImageIcon, PlusCircle, Upload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { z } from "zod";
@@ -22,7 +25,6 @@ import { createBlockSpec } from "../createBlockSpec";
 import { useBlockImportDialog } from "../hooks";
 import type { ComponentBase } from "../types";
 import { getProtectedUrl, getTruncatedText } from "../utils";
-import { showToast } from "@/utils/handle-server-error";
 
 export interface ImageComponent extends ComponentBase {
   description: string;

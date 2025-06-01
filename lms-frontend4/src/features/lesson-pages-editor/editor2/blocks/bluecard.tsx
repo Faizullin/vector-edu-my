@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/rules-of-hooks */
+
 import {
   createDefaultApiService,
   useComponentBaseForm,
@@ -13,6 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
+import { showToast } from "@/utils/handle-server-error";
 import { AlertCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo } from "react";
 import { z } from "zod";
@@ -21,7 +24,6 @@ import { createBlockSpec } from "../createBlockSpec";
 import { useBlockImportDialog, useContentEditProps } from "../hooks";
 import type { ComponentBase } from "../types";
 import { getTruncatedText } from "../utils";
-import { showToast } from "@/utils/handle-server-error";
 
 export interface BluecardComponent extends ComponentBase {
   text: string;

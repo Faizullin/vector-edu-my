@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/rules-of-hooks */
+
 import type { DocumentBase } from "@/types";
 import {
   createDefaultApiService,

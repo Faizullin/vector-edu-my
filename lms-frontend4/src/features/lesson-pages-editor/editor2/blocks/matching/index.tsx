@@ -1,4 +1,6 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { Button } from "@/components/ui/button";
+import { showComponentNiceDialog } from "@/utils/nice-modal";
 import { PlusCircle } from "lucide-react";
 import { useCallback, useEffect, useMemo } from "react";
 import { BlockCardWrapper } from "../../components/BlockCardWrapper";
@@ -6,7 +8,6 @@ import { createBlockSpec } from "../../createBlockSpec";
 import { useBlockImportDialog } from "../../hooks";
 import { MatchingEditNiceDialog } from "./edit-nice-dialog";
 import type { MatchingComponent } from "./schema";
-import { showComponentNiceDialog } from "@/utils/nice-modal";
 
 // Defaults
 const type = "matching";

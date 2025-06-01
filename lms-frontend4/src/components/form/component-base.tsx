@@ -212,7 +212,6 @@ export function useComponentBaseForm<
   const [formMode, setFormMode] = useState<FormMode>(initialMode);
   const [recordId, setRecordId] = useState<DocumentId | null>(null);
   const [record, setRecord] = useState<T | null>(initialRecord);
-  const [_, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
 
   const queryClient = useQueryClient();
@@ -311,7 +310,6 @@ export function useComponentBaseForm<
     async (id: string): Promise<T> => {
       if (!apiService) throw new Error("API service not provided");
 
-      setIsLoading(true);
       notify.loading("Loading record...");
 
       try {
@@ -329,8 +327,6 @@ export function useComponentBaseForm<
       } catch (err) {
         notify.error("Failed to load record", err);
         throw err;
-      } finally {
-        setIsLoading(false);
       }
     },
     [
@@ -436,7 +432,8 @@ function isExtendedFormHook<T extends FieldValues>(
 
 // ✅ Component props with better typing
 interface ComponentFormBaseProps<
-  T extends DocumentBase,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _ extends DocumentBase,
   TFieldValues extends FieldValues = any
 > {
   formName: string;
