@@ -121,7 +121,7 @@ export function MatchingQuestionsProvider({
     if (formHook.record) {
       const newData: Matching = {
         title: formHook.record.title,
-        elements: formHook.record.elements.map((el) => ({
+        elements: formHook.record.elements.map((el: { uid: any; text: any; image: any; }) => ({
           uid: el.uid,
           text: el.text,
           image_file: null,
@@ -129,12 +129,12 @@ export function MatchingQuestionsProvider({
         })),
         couples: [],
       };
-      formHook.record.couples.forEach((cp) => {
+      formHook.record.couples.forEach((cp: { first_element: any; second_element: any; }) => {
         const firstElement = formHook.record!.elements.find(
-          (el) => el.uid === cp.first_element
+          (el: { uid: any; }) => el.uid === cp.first_element
         );
         const secondElement = formHook.record!.elements.find(
-          (el) => el.uid === cp.second_element
+          (el: { uid: any; }) => el.uid === cp.second_element
         );
         if (firstElement && secondElement) {
           newData.couples.push({

@@ -53,8 +53,8 @@ export function ActionsProvider({ children }: { children: React.ReactNode }) {
   });
   const { blocks, setErrors } = useEditor();
   const loadRelatedLessonPagesMutationQuery = {
-    lesson: lessonObj.id,
-    disablePagination: true,
+    lesson: `${lessonObj.id}`,
+    disablePagination: `${true}`,
   };
   const loadRelatedLessonPagesMutation = useMutation({
     mutationFn: () =>
@@ -169,7 +169,7 @@ export function ActionsProvider({ children }: { children: React.ReactNode }) {
         }
       }
     });
-  }, [loadQuery, loadContentObjDataMutation]);
+  }, [loadQuery, loadContentObjDataMutation, setInitialContent]);
   const loadInitial = useCallback(() => {
     loadRelatedLessonPagesMutation.mutateAsync();
     loadAndParseEditor();
@@ -211,13 +211,13 @@ export function ActionsProvider({ children }: { children: React.ReactNode }) {
           }));
           return [...prev, ...newErrors];
         });
-        let errMessage = r.errors.message || "Publish failed";
+        const errMessage = r.errors.message || "Publish failed";
         showToast("error", {
           message: errMessage,
         });
       }
     });
-  }, [blocks, loadAndParseEditor]);
+  }, [blocks, loadAndParseEditor, publishMutation, setErrors]);
   const loadDemoMutation = useMutation({
     mutationFn: (postId: DocumentId) =>
       EditorApiService.fetchLoadDemoLessonData(postId),

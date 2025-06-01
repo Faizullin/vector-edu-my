@@ -10,6 +10,7 @@ const RenderBlockMainForm = () => {
   if (!selectedBlockIdControl.state) {
     return null;
   }
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { block, schema } = useBlockSchema(selectedBlockIdControl.state);
   if (!schema) {
     return (

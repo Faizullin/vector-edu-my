@@ -1,31 +1,28 @@
 "use client";
 
-import { Log } from "@/utils/log";
 import {
-  MutationCache,
-  QueryCache,
   QueryClient,
-  QueryClientProvider,
+  QueryClientProvider
 } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import React, { useState } from "react";
 
-/**
- * Logs any errors encountered by queries or mutations.
- * @param error - The error object from a query or mutation
- */
-const handleApiError = (error: any) => {
-  Log.error("queryClient:", error);
-};
+// /**
+//  * Logs any errors encountered by queries or mutations.
+//  * @param error - The error object from a query or mutation
+//  */
+// const handleApiError = (error: any) => {
+//   Log.error("queryClient:", error);
+// };
 
-const queryClient = new QueryClient({
-  queryCache: new QueryCache({
-    onError: handleApiError,
-  }),
-  mutationCache: new MutationCache({
-    onError: handleApiError,
-  }),
-});
+// const queryClient = new QueryClient({
+//   queryCache: new QueryCache({
+//     onError: handleApiError,
+//   }),
+//   mutationCache: new MutationCache({
+//     onError: handleApiError,
+//   }),
+// });
 
 /**
  * Provides the Tanstack Query Client to the application.

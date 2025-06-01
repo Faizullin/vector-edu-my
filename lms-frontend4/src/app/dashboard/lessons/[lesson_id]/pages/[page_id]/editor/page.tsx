@@ -7,7 +7,7 @@ import type {
 import { type PostDocument } from "@/features/posts/data/schema";
 import { getAuthHeaders, getUrl } from "@/lib/simpleRequest";
 import { Log } from "@/utils/log";
-import { Metadata, ResolvingMetadata } from "next";
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 interface EditorPageProps {
@@ -23,7 +23,6 @@ interface EditorPageProps {
 
 async function fetchWithAuth<T>({
   url,
-  method = "GET",
 }: {
   url: string;
   method: string;
@@ -151,10 +150,9 @@ export default async function Page({ params, searchParams }: EditorPageProps) {
 }
 
 // Optional: Generate metadata
-export async function generateMetadata(
-  { params, searchParams }: EditorPageProps,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: EditorPageProps): Promise<Metadata> {
   const { lesson_id, page_id } = await params;
   return {
     title: `Editor - Lesson ${lesson_id} - Page ${page_id}`,

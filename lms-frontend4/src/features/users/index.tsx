@@ -38,7 +38,7 @@ export default function Users() {
         });
       });
     },
-    [queryClient.invalidateQueries]
+    [queryClient]
   );
   const actions: ActionRegistry<UserDocument> = useMemo(
     () => ({

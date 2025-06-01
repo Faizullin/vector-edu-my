@@ -58,7 +58,6 @@ export const LessonEditNiceDialog = NiceModal.create<
       description: "",
       is_available_on_free: false,
       order: 0,
-      
     },
     notifications: {
       onSuccess: (message) => {
@@ -94,7 +93,7 @@ export const LessonEditNiceDialog = NiceModal.create<
         url: "/lessons/batches",
         method: "GET",
         params: {
-          disablePagination: true,
+          disablePagination: `${true}`,
         },
       }),
   });
@@ -111,6 +110,7 @@ export const LessonEditNiceDialog = NiceModal.create<
         `${props.defaultValues.lesson_batch?.id}`
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.defaultValues]);
 
   return (

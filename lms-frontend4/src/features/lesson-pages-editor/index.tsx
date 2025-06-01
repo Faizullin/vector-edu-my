@@ -1,10 +1,8 @@
 "use client";
 
 import { memo } from "react";
-import { LessonDocument, LessonPageDocument } from "../lessons/data/schema";
-import { PostDocument } from "../posts/data/schema";
-import { Editor } from "./editor2/editor";
 import { EditorLoadDataProps } from "./editor2/context/load-data-context";
+import { Editor } from "./editor2/editor";
 
 export function LessonPagesEditor(props: EditorLoadDataProps) {
   if (props.type === "editor2") {

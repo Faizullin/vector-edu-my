@@ -107,9 +107,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   };
 
   const handleGoogleLogin = async () => {
-    try {
-      await googleLoginMutation.mutateAsync();
-    } catch (error) {}
+    await googleLoginMutation.mutateAsync();
   };
 
   return (

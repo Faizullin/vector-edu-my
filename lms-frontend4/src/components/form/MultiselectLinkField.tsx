@@ -31,7 +31,7 @@ export const MultiselectLinkInputField = <T,>(
     [props.parseParams, props.url]
   );
   const loadOptionsDebounced = useCallback(
-    debounce((inputValue: string, callback: (options: any) => void) => {
+    debounce((inputValue: string, callback: (options: unknown) => void) => {
       fetchOptions(inputValue).then((response) => {
         const parsedResponse = props.parseResponse(response!);
         callback(parsedResponse);

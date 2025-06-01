@@ -3,7 +3,7 @@ import { JwtAuthService } from "./firebase/jwt-auth";
 
 interface RequestBaseProps {
   url: string;
-  params?: Record<string, any>;
+  params?: Record<string, string | number | boolean>;
   headers?: Record<string, string>;
   signal?: AbortSignal;
   auth?: {
@@ -17,16 +17,17 @@ interface RequestGetProps extends RequestBaseProps {
   url: string;
   method?: "GET";
 }
+
 interface RequestPostProps extends RequestBaseProps {
   url: string;
   method: "POST" | "PUT" | "PATCH" | "DELETE";
-  body?: Record<string, any> | FormData;
+  body?: Record<string, unknown> | FormData;
 }
 
 export class ApiError extends Error {
   public readonly status: number;
   public readonly statusText: string;
-  public readonly data: any;
+  public readonly data: unknown;
   public readonly url: string;
   public readonly method: string;
   public readonly timestamp: Date;
@@ -35,7 +36,7 @@ export class ApiError extends Error {
     message: string,
     status: number,
     statusText: string,
-    data: any,
+    data: unknown,
     url: string,
     method: string
   ) {
@@ -73,9 +74,9 @@ export const getAuthHeaders = async ({
   auth,
 }: {
   auth: { token?: string; disable?: boolean } | undefined;
-  headers?: Record<string, any>;
+  headers?: Record<string, unknown>;
 }) => {
-  const headersWithBearer: Record<string, any> = {
+  const headersWithBearer: Record<string, unknown> = {
     "Content-Type": "application/json",
     ...headers,
   };
@@ -90,7 +91,7 @@ export const getAuthHeaders = async ({
       headersWithBearer["Authorization"] = `Token ${token}`;
     }
   }
-  return headersWithBearer;
+  return headersWithBearer as HeadersInit;
 };
 
 export const getUrl = ({
@@ -99,10 +100,12 @@ export const getUrl = ({
   urlPrefix = "/api/v1/lms",
 }: {
   url: string;
-  params?: Record<string, any>;
+  params?: Record<string, string | number | boolean>;
   urlPrefix?: string;
 }) => {
-  const queryString = new URLSearchParams(params).toString();
+  const queryString = new URLSearchParams(
+    params as Record<string, string>
+  ).toString();
   return `${BASE_API_URL}${
     queryString ? `${urlPrefix}${url}/?${queryString}` : `${urlPrefix}${url}/`
   }`;
@@ -146,7 +149,7 @@ export async function simpleRequest<T>({
   if (!response.ok) {
     const status = response.status;
     const statusText = response.statusText;
-    let errorData: any;
+    let errorData: unknown;
     try {
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {

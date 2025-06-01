@@ -81,10 +81,7 @@ export class EditorApiService {
   }
   static createComponent<T>(
     type: string,
-    data: Record<string, any>,
-    options = {
-      mediaType: "application/json",
-    }
+    data: Record<string, any>
   ): Promise<T> {
     return simpleRequest<T>({
       method: "POST",
@@ -96,10 +93,7 @@ export class EditorApiService {
   static updateComponent<T>(
     type: string,
     id: DocumentId,
-    data: Record<string, any>,
-    options = {
-      mediaType: "application/json",
-    }
+    data: Record<string, any>
   ): Promise<T> {
     return simpleRequest<T>({
       method: "PUT",

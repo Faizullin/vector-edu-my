@@ -77,7 +77,7 @@ const SidebarProvider = forwardRef<
         width,
         setWidth,
       }),
-      [open, setOpen]
+      [open, setOpen, width]
     );
 
     return (
@@ -148,8 +148,8 @@ const Sidebar = forwardRef<
         open
           ? "translate-x-0"
           : side === "left"
-            ? "-translate-x-full"
-            : "translate-x-full",
+          ? "-translate-x-full"
+          : "translate-x-full",
         className
       )}
       {...props}
@@ -212,6 +212,7 @@ const SidebarContent = forwardRef<HTMLDivElement, ComponentProps<"div">>(
     );
   }
 );
+SidebarContent.displayName = "SidebarContent";
 const SidebarFooter = forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
   ({ className, ...props }, ref) => {
     return (

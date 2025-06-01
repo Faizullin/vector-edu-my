@@ -17,12 +17,17 @@ import NiceModal, {
 import { simpleRequest } from "@/lib/simpleRequest";
 import { showToast } from "@/utils/handle-server-error";
 import { z } from "zod";
-import { userPaymentTypes, type UserDocument } from "../data/schema"; // your UserDocument type
+import { type UserDocument, userPaymentTypes } from "../data/schema"; // your UserDocument type
 
+const tmpOptions = [
+  ...userPaymentTypes.map((item) => item.value),
+] as unknown as readonly [string, ...string[]];
 const formSchema = z.object({
-  user_type: z.enum(userPaymentTypes.map((item) => item.value) as any, {
-    required_error: "User type is required.",
-  }),
+  user_type: z
+    .enum(tmpOptions, {
+      required_error: "User type is required.",
+    })
+    .nullable(),
 });
 
 export const UserToggleStatusNiceDialog = NiceModal.create<
@@ -34,7 +39,7 @@ export const UserToggleStatusNiceDialog = NiceModal.create<
     defaultValues: {
       user_type: null,
     },
-    onSuccess(data) {
+    onSuccess() {
       modal.resolve({
         result: true,
       });
@@ -55,10 +60,10 @@ export const UserToggleStatusNiceDialog = NiceModal.create<
     transformToApi(formData) {
       return {
         user_ids: users.map((user) => user.id),
-        user_type: formData.user_type,
+        user_type: formData.user_type as any,
       };
     },
-    fetchFn: (_): Promise<any> =>
+    fetchFn: (): Promise<unknown> =>
       simpleRequest({
         url: `/accounts/users/toggle-user-type`,
         method: "POST",
@@ -74,9 +79,9 @@ export const UserToggleStatusNiceDialog = NiceModal.create<
       formHook={formHook}
       modal={modal}
       displayType="dialog"
-      getTitle={(_) => "Toggle users"}
+      getTitle={() => "Toggle users"}
       formName="user-form"
-      getSubmitButtonText={(_) => "Save"}
+      getSubmitButtonText={() => "Save"}
       componentClasses={{
         dialogContent: "!max-w-lg",
       }}
@@ -95,7 +100,7 @@ export const UserToggleStatusNiceDialog = NiceModal.create<
                   <FormControl className="col-span-4 w-auto">
                     <SelectDropdown
                       items={userPaymentTypes}
-                      defaultValue={field.value}
+                      defaultValue={field.value || ""}
                       onValueChange={field.onChange}
                       placeholder="Select user type"
                       isControlled

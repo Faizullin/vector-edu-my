@@ -42,7 +42,7 @@ export default function LessonBatches() {
         url: "/lessons/batches",
         method: "GET",
         params: {
-          disablePagination: true,
+          disablePagination: `$F{true}`,
         },
       }),
   });

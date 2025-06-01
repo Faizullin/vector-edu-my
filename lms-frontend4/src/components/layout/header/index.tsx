@@ -10,13 +10,7 @@ interface HeaderProps extends React.HTMLAttributes<HTMLElement> {
   ref?: React.Ref<HTMLElement>;
 }
 
-export function Header({
-  children,
-  fixed,
-  ref,
-  className,
-  ...props
-}: HeaderProps) {
+export function Header({ children, fixed, className, ...props }: HeaderProps) {
   const [offset, setOffset] = useState(0);
 
   useEffect(() => {

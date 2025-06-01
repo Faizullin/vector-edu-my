@@ -1,8 +1,9 @@
 import NiceModal, { NiceModalArgs } from "@/context/nice-modal-context";
+import React from "react";
 
 export const showComponentNiceDialog = <
-  T extends any,
-  C extends any,
+  T,
+  C,
   P extends Partial<NiceModalArgs<React.FC<C>>> = Partial<
     NiceModalArgs<React.FC<C>>
   >

@@ -48,6 +48,7 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
+  Header,
   useReactTable,
   type Row,
 } from "@tanstack/react-table";
@@ -104,9 +105,9 @@ export function LessonPageDrawer({
         url: `/lessons/pages`,
         method: "GET",
         params: {
-          lesson_id: lessonId,
+          lesson_id: `${lessonId}`,
           ordering: "-order",
-          disablePagination: true,
+          disablePagination: "true",
         },
       });
     },
@@ -306,7 +307,7 @@ export function LessonPageDrawer({
         },
       }),
     ];
-  }, [lessonId]);
+  }, [actions]);
   const dataIds = useMemo<UniqueIdentifier[]>(
     () => dataList.map(({ id }) => `${id}`),
     [dataList]
@@ -383,36 +384,8 @@ export function LessonPageDrawer({
                     {table.getHeaderGroups().map((headerGroup) => (
                       <TableRow key={headerGroup.id}>
                         {headerGroup.headers.map((header) => {
-                          const classes = useMemo(() => {
-                            return cn(
-                              header.column.columnDef.meta?.sizeBorderStyle
-                                ? cn(
-                                    "drop-shadow-[0_1px_2px_rgb(0_0_0_/_0.1)] dark:drop-shadow-[0_1px_2px_rgb(255_255_255_/_0.1)] lg:drop-shadow-none",
-                                    "bg-background transition-colors duration-200 group-hover/row:bg-muted group-data-[state=selected]/row:bg-muted",
-                                    "sticky left-6 md:table-cell"
-                                  )
-                                : "",
-                              header.column.columnDef.meta?.className || ""
-                            );
-                          }, [header.column.columnDef.meta]);
                           return (
-                            <TableHead
-                              key={header.id}
-                              colSpan={header.colSpan}
-                              className={classes}
-                            >
-                              {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                                <DataTableColumnHeader
-                                  column={header.column}
-                                  title={String(header.column.columnDef.header)}
-                                />
-                              ) : (
-                                flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )
-                              )}
-                            </TableHead>
+                            <TableItemHeader key={header.id} header={header} />
                           );
                         })}
                       </TableRow>
@@ -449,6 +422,33 @@ export function LessonPageDrawer({
     </div>
   );
 }
+
+const TableItemHeader = <T,>({ header }: { header: Header<T, unknown> }) => {
+  const classes = useMemo(() => {
+    return cn(
+      header.column.columnDef.meta?.sizeBorderStyle
+        ? cn(
+            "drop-shadow-[0_1px_2px_rgb(0_0_0_/_0.1)] dark:drop-shadow-[0_1px_2px_rgb(255_255_255_/_0.1)] lg:drop-shadow-none",
+            "bg-background transition-colors duration-200 group-hover/row:bg-muted group-data-[state=selected]/row:bg-muted",
+            "sticky left-6 md:table-cell"
+          )
+        : "",
+      header.column.columnDef.meta?.className || ""
+    );
+  }, [header.column.columnDef.meta]);
+  return (
+    <TableHead key={header.id} colSpan={header.colSpan} className={classes}>
+      {header.isPlaceholder ? null : header.column.getCanSort() ? (
+        <DataTableColumnHeader
+          column={header.column}
+          title={String(header.column.columnDef.header)}
+        />
+      ) : (
+        flexRender(header.column.columnDef.header, header.getContext())
+      )}
+    </TableHead>
+  );
+};
 
 function DraggableRow<T extends DocumentBase>({ row }: { row: Row<T> }) {
   const { setNodeRef, transform, transition, isDragging } = useSortable({

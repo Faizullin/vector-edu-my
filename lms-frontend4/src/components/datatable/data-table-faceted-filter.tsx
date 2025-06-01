@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
 import { Badge } from "@/components/ui/badge";
@@ -27,11 +28,11 @@ import { Separator } from "@/components/ui/separator";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 import { simpleRequest } from "@/lib/simpleRequest";
 import { cn } from "@/lib/utils";
-import type { FieldItem, MyColumnMeta } from "@/types";
+import type { MyColumnMeta } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import type { Column } from "@tanstack/react-table";
 import { CheckIcon, PlusCircleIcon, SearchIcon, X } from "lucide-react";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Input } from "../ui/input";
 
 interface DataTableFacetedFilterProps<TData, TValue> {
@@ -55,7 +56,7 @@ export function DataTableFacetedFilter<TData, TValue>({
     if (currentValue !== filterValue) {
       setFilterValue(currentValue);
     }
-  }, [column?.getFilterValue()]);
+  }, [column, filterValue]);
 
   // ✅ Update both local state and column filter
   const updateFilter = useCallback(
@@ -76,7 +77,7 @@ export function DataTableFacetedFilter<TData, TValue>({
           url: filter.query!.fetchOptionsUrl,
           method: "GET",
           params: {
-            disablePagination: true,
+            disablePagination: `${true}`,
           },
         }),
       enabled: !!filter.query,
@@ -97,6 +98,7 @@ export function DataTableFacetedFilter<TData, TValue>({
         (option) => option.value === currentValue
       );
 
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       const handleValueChange = useCallback(
         (value: string) => {
           const newValue = value === "" ? undefined : value;

@@ -250,20 +250,16 @@ export type NiceModalArgs<T> = T extends
   : Record<string, unknown>;
 
 // Show modal function with overloads for different types
-export function show<
-  T extends any,
-  C extends any,
-  P extends Partial<NiceModalArgs<React.FC<C>>>
->(modal: React.FC<C>, args?: P): Promise<T>;
+export function show<T, C, P extends Partial<NiceModalArgs<React.FC<C>>>>(
+  modal: React.FC<C>,
+  args?: P
+): Promise<T>;
 
-export function show<T extends any>(
+export function show<T>(
   modal: string,
   args?: Record<string, unknown>
 ): Promise<T>;
-export function show<T extends any, P extends any>(
-  modal: string,
-  args: P
-): Promise<T>;
+export function show<T, P>(modal: string, args: P): Promise<T>;
 
 export function show(
   modal: React.FC<any> | string,
@@ -333,10 +329,7 @@ export function useModal(
   modal: string,
   args?: Record<string, unknown>
 ): NiceModalHandler;
-export function useModal<
-  C extends any,
-  P extends Partial<NiceModalArgs<React.FC<C>>>
->(
+export function useModal<C, P extends Partial<NiceModalArgs<React.FC<C>>>>(
   modal: React.FC<C>,
   args?: P
 ): Omit<NiceModalHandler, "show"> & {
@@ -428,6 +421,7 @@ export function useModal(modal?: any, args?: any): any {
 export const create = <P extends NiceModalHocProps>(
   Comp: React.ComponentType<P>
 ): React.FC<P & NiceModalHocProps> => {
+  // eslint-disable-next-line react/display-name
   return ({ defaultVisible, keepMounted, ...props }) => {
     const id = props.id!;
     const { args, show } = useModal(id);

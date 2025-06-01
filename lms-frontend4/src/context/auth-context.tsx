@@ -22,7 +22,7 @@ export const AuthContext = createContext<AuthContextType>({
   user: null,
 });
 
-interface AuthContextProviderProps extends PropsWithChildren {}
+type AuthContextProviderProps = PropsWithChildren;
 
 export function AuthContextProvider({ children }: AuthContextProviderProps) {
   // Set up state to track the authenticated user and loading status

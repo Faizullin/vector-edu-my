@@ -1,4 +1,4 @@
-import type { DocumentBase } from "@/client";
+import type { DocumentBase } from "@/types";
 import { z } from "zod";
 import type { ComponentBase } from "../../types";
 

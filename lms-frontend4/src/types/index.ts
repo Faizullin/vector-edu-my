@@ -41,7 +41,7 @@ export type MyColumnMeta = {
         type: "select-async";
         query?: {
           fetchOptionsUrl: string;
-          transformResponse: (data: any) => Array<FieldItem>;
+          transformResponse: (data: never) => Array<FieldItem>;
           key: string[];
         };
         renderMode?: "select" | "checkbox";

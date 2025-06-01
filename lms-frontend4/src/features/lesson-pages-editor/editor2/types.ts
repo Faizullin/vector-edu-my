@@ -8,7 +8,7 @@ import type { JSX } from "react";
 
 export type BlockIdentifier = string;
 
-export interface ComponentBase extends DocumentBase {}
+export type ComponentBase = DocumentBase;
 
 export interface BlockDataField<T extends ComponentBase = ComponentBase> {
   obj: T | null;

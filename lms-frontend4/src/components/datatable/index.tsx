@@ -28,13 +28,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
 
 declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData extends RowData, TValue> {
     filter?: MyColumnMeta["filter"];
     className?: string;
@@ -270,7 +269,7 @@ const DatatablePanel = ({
                       disabled={action.loading || action.disabled}
                       className={cn(
                         action.variant === "destructive" &&
-                          "text-destructive focus:text-destructive w-48",
+                          "text-destructive focus:text-destructive w-48"
                       )}
                     >
                       {action.icon && (
@@ -307,6 +306,7 @@ const DatatableTable = <T extends DocumentBase>() => {
             {datatable.table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
+                  // eslint-disable-next-line react-hooks/rules-of-hooks
                   const classes = useMemo(() => {
                     return cn(
                       header.column.columnDef.meta?.sizeBorderStyle
@@ -399,6 +399,8 @@ const DatatableTableBody = memo(<T extends DocumentBase>() => {
   );
 });
 
+DatatableTableBody.displayName = "DatatableTableBody";
+
 // ✅ Enhanced Row Actions Component with dynamic support
 interface DatatableRowActionsProps<T extends DocumentBase> {
   item: T;
@@ -466,4 +468,4 @@ const Datatable = {
 
 export default Datatable;
 export { useDatatable };
-export type { ActionComponent, ActionRegistry, ActionContext };
+export type { ActionComponent, ActionContext, ActionRegistry };

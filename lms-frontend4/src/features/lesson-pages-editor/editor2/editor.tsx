@@ -1,6 +1,5 @@
 "use client";
 
-import type { DocumentId } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +15,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { simpleRequest } from "@/lib/simpleRequest";
+import type { DocumentId } from "@/types";
+import { showComponentNiceDialog } from "@/utils/nice-modal";
 import {
   closestCenter,
   DndContext,
@@ -56,6 +58,11 @@ import { ActionsProvider, useActionsContext } from "./context/actions-context";
 import { SortableBlockWrapper } from "./context/dnd-context";
 import { EditorProvider, useEditor } from "./context/editor-context";
 import {
+  EditorLoadDataProps,
+  LoadDataProvider,
+  useLoadDataContext,
+} from "./context/load-data-context";
+import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
@@ -65,13 +72,6 @@ import { useControlState } from "./hooks";
 import { schema } from "./schema";
 import type { Block, BlockIdentifier } from "./types";
 import { createSaveData, getEditorLink } from "./utils";
-import { showComponentNiceDialog } from "@/utils/nice-modal";
-import { simpleRequest } from "@/lib/simpleRequest";
-import {
-  EditorLoadDataProps,
-  LoadDataProvider,
-  useLoadDataContext,
-} from "./context/load-data-context";
 
 const schemaArr = Object.values(schema);
 const SuggestionList = memo(
@@ -79,25 +79,46 @@ const SuggestionList = memo(
     return (
       <>
         {schemaArr.map((blockSchema) => {
-          const rendered = useMemo(
-            () => blockSchema.suggestionMenu({ addBlock }),
-            [blockSchema, addBlock]
-          );
+          if (!blockSchema.suggestionMenu) {
+            return null;
+          }
           return (
-            <DropdownMenuItem
+            <SuggestListItem
               key={blockSchema.type}
-              className="flex items-center gap-2 p-2 border-b last:border-b-0"
-              onClick={() => addBlock(blockSchema.type)}
-            >
-              {rendered.icon({})}
-              <span>{rendered.title}</span>
-            </DropdownMenuItem>
+              blockSchema={blockSchema}
+              addBlock={addBlock}
+            />
           );
         })}
       </>
     );
   }
 );
+
+SuggestionList.displayName = "SuggestionList";
+
+const SuggestListItem = ({
+  blockSchema,
+  addBlock,
+}: {
+  blockSchema: (typeof schemaArr)[number];
+  addBlock: (type: string, afterId?: BlockIdentifier) => void;
+}) => {
+  const rendered = useMemo(
+    () => blockSchema.suggestionMenu({ addBlock }),
+    [blockSchema, addBlock]
+  );
+  return (
+    <DropdownMenuItem
+      key={blockSchema.type}
+      className="flex items-center gap-2 p-2 border-b last:border-b-0"
+      onClick={() => addBlock(blockSchema.type)}
+    >
+      {rendered.icon({})}
+      <span>{rendered.title}</span>
+    </DropdownMenuItem>
+  );
+};
 
 const ErrorBoundaryComponetRender = ({ error }: { error: Error }) => {
   return (
@@ -139,7 +160,7 @@ const RenderEditor = () => {
     useActionsContext();
   useEffect(() => {
     loadInitial();
-  }, []);
+  }, [loadInitial]);
   const { postObj, lessonObj, lessonPageObj } = useLoadDataContext();
   const selectedBlock = useMemo(
     () => blocks.find((block) => block.id === selectedBlockIdControl.state),
@@ -169,6 +190,7 @@ const RenderEditor = () => {
 
       activeBlockIdControl.setState(null);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [blocks]
   );
 
@@ -229,7 +251,7 @@ const RenderEditor = () => {
         },
       });
     },
-    [lessonObj.id, postObj.id, openPostEditorMutation]
+    [lessonObj.id, openPostEditorMutation]
   );
 
   return (

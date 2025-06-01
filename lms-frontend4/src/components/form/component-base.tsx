@@ -82,15 +82,15 @@ interface ExtendedFormHook<TFieldValues extends FieldValues = any>
 // ✅ Simple form hook options
 interface UseSimpleFormOptions<
   T extends DocumentBase,
-  TSchema extends ZodType<any, ZodTypeDef, any>
+  TSchema extends ZodType<unknown, ZodTypeDef, unknown>
 > {
   schema: TSchema;
   defaultValues?: DefaultValues<z.infer<TSchema>>;
   notifications?: NotificationHandlers;
   transformToApi?: (formData: z.infer<TSchema>) => Partial<T>;
-  fetchFn: (formData: any) => Promise<any>;
-  onSuccess?: (data: any) => void;
-  onError?: (error: any) => void;
+  fetchFn: (formData: unknown) => Promise<unknown>;
+  onSuccess?: (data: unknown) => void;
+  onError?: (error: unknown) => void;
 }
 
 // ✅ Optimized simple form hook
@@ -212,7 +212,7 @@ export function useComponentBaseForm<
   const [formMode, setFormMode] = useState<FormMode>(initialMode);
   const [recordId, setRecordId] = useState<DocumentId | null>(null);
   const [record, setRecord] = useState<T | null>(initialRecord);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [_, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
 
   const queryClient = useQueryClient();
