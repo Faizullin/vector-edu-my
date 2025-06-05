@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from api_lessons.models import Lesson, LessonPage, LessonBatch
+from api_lessons.models import Lesson, LessonBatch
+from ..models import LessonPage
 
 User = get_user_model()
 
@@ -66,9 +67,11 @@ class LessonPageSerializer(serializers.ModelSerializer):
             "id",
             "lesson",
             "order",
+            "title",
         ]
 
 
 class LessonPageReorderSubmitSerializer(serializers.Serializer):
     lesson_id = serializers.PrimaryKeyRelatedField(queryset=Lesson.objects.all())
     ordered_ids = serializers.ListField(child=serializers.IntegerField())
+

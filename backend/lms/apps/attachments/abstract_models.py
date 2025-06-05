@@ -12,8 +12,12 @@ class AbstractFileModel(models.Model):
     size = models.CharField(_("Size"), blank=True, max_length=100)
     file_type = models.CharField(_("File Type"), default="file", max_length=20)
     parent = models.BigIntegerField(_("Parent"), blank=True, null=True)
-    file = models.FileField(_("File"), upload_to=get_default_upload_file_name, null=True, blank=True)
-    storage_engine = models.CharField(_("Storage Engine"), max_length=20, default="local")
+    file = models.FileField(
+        _("File"), upload_to=get_default_upload_file_name, null=True, blank=True
+    )
+    storage_engine = models.CharField(
+        _("Storage Engine"), max_length=20, default="local"
+    )
 
     class Meta:
         abstract = True
@@ -28,3 +32,8 @@ class AbstractFileModel(models.Model):
         if self.alt:
             return self.alt
         return self.name
+
+    def delete_file(self, *args, **kwargs):
+        """Delete the file from storage when the model instance is deleted."""
+        if self.file:
+            self.file.delete(save=False)
