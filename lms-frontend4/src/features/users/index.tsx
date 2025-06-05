@@ -45,7 +45,7 @@ export default function Users() {
       // archive: {
       //   label: "Archive Selected",
       //   callback: (_, selectedItems) => {
-      //     console.log("Archiving", selectedItems?.length || 0, "items");
+      //     Log.info("Archiving", selectedItems?.length || 0, "items");
       //   },
       //   icon: <Archive className="h-4 w-4" />,
       //   renderType: "menu",
@@ -136,7 +136,7 @@ export default function Users() {
   return (
     <>
       <Main>
-        <Datatable.Root
+        <Datatable.Root<UserDocument>
           resource={{
             name: "users",
             url: `/accounts/users`,

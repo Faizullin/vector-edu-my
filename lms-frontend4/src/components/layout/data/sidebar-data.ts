@@ -1,8 +1,11 @@
 import {
+  Bell,
   BookIcon,
   Command,
   ListIcon,
   PanelTopIcon,
+  Settings,
+  UserCog,
   UserIcon,
 } from "lucide-react";
 import { SidebarData } from "../types";
@@ -135,18 +138,27 @@ export const sidebarData: SidebarData = {
     //     // },
     //   ],
     // },
-    // {
-    //   title: "Other",
-    //   items: [
-    //     {
-    //       title: "Settings",
-    //       icon: IconSettings,
-    //       items: [
-    //         {
-    //           title: "Profile",
-    //           url: "/settings",
-    //           icon: IconUserCog,
-    //         },
+    {
+      title: "Other",
+      items: [
+        {
+          title: "Settings",
+          icon: Settings,
+          items: [
+            {
+              title: "Profile",
+              href: "/dashboard/settings",
+              icon: UserCog,
+            },
+            {
+              title: "Notifications",
+              href: "/dashboard/settings/notifications",
+              icon: Bell,
+            },
+          ],
+        },
+      ],
+    },
     //         {
     //           title: "Account",
     //           url: "/settings/account",
@@ -156,11 +168,6 @@ export const sidebarData: SidebarData = {
     //         //   title: "Appearance",
     //         //   url: "/settings/appearance",
     //         //   icon: IconPalette,
-    //         // },
-    //         // {
-    //         //   title: "Notifications",
-    //         //   url: "/settings/notifications",
-    //         //   icon: IconNotification,
     //         // },
     //         // {
     //         //   title: "Display",

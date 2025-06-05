@@ -1,5 +1,5 @@
 import { BASE_API_URL } from "@/config/constants";
-import { JwtAuthService } from "./firebase/jwt-auth";
+import { JwtAuthService } from "./jwt-auth";
 
 interface RequestBaseProps {
   url: string;
@@ -86,7 +86,7 @@ export const getAuthHeaders = async ({
     }
     headersWithBearer["Authorization"] = `Token ${auth.token}`;
   } else {
-    const token = await JwtAuthService.getJWTToken();
+    const token = (await JwtAuthService.getStorageData())?.token;
     if (token) {
       headersWithBearer["Authorization"] = `Token ${token}`;
     }
@@ -109,6 +109,13 @@ export const getUrl = ({
   return `${BASE_API_URL}${
     queryString ? `${urlPrefix}${url}/?${queryString}` : `${urlPrefix}${url}/`
   }`;
+};
+
+const getPostBody = (body: Record<string, unknown> | FormData) => {
+  if (body instanceof FormData) {
+    return body;
+  }
+  return JSON.stringify(body);
 };
 
 export async function simpleRequest<T>({
@@ -142,7 +149,7 @@ export async function simpleRequest<T>({
     response = await fetch(fullUrl, {
       method,
       headers: headersWithBearer,
-      body: JSON.stringify((props as RequestPostProps).body),
+      body: getPostBody((props as RequestPostProps).body || {}),
       signal,
     });
   }

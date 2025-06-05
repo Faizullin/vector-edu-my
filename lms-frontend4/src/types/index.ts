@@ -1,12 +1,24 @@
+export interface AuthUserNotificationSettings {
+  friend_request_notification: boolean;
+  global_event_notification: boolean;
+  last_lesson_reminder: string;
+  last_streak_notification: string;
+  periodic_lesson_reminder: boolean;
+  streak_notification: boolean;
+}
 export type AuthUser = {
-  first_name: string;
-  last_name: string;
+  day_streak: number;
+  description: string;
   email: string;
-  username: string;
-  is_active?: boolean;
-  is_superuser?: boolean;
-  full_name?: string | null;
-  id: string;
+  id: DocumentId;
+  max_day_streak: number;
+  name: string;
+  notification_settings: AuthUserNotificationSettings;
+  paid: boolean;
+  photo: string;
+  progress: number;
+  ranking: number;
+  timezone_difference: number;
 };
 export type PaginatedData<T> = {
   results: T[];

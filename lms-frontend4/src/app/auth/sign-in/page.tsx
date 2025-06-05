@@ -19,8 +19,7 @@ export default function SignIn() {
       <CardHeader>
         <CardTitle className="text-lg tracking-tight">Sign In</CardTitle>
         <CardDescription>
-          Enter your email and password below to <br />
-          log into your account
+          Log in to your account to access the features.
         </CardDescription>
       </CardHeader>
       <CardContent>

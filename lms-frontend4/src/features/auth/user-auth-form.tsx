@@ -1,65 +1,46 @@
 "use client";
 
-import { PasswordInput } from "@/components/form/password-input";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { URLS } from "@/config/constants";
-import { FirebaseAuthError, FirebaseAuthService } from "@/lib/firebase/auth";
+import { FirebaseAuthService } from "@/lib/firebase/auth";
 import { cn } from "@/lib/utils";
-import { showToast } from "@/utils/handle-server-error";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type HTMLAttributes } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 
 type UserAuthFormProps = HTMLAttributes<HTMLFormElement>;
 
-const formSchema = z.object({
-  email: z
-    .string()
-    .min(1, {
-      message: "Please enter your email address",
-    })
-    .email({
-      message: "Please enter a valid email address",
-    }),
-  password: z
-    .string()
-    .min(1, {
-      message: "Please enter your password",
-    })
-    .min(7, {
-      message: "Password must be at least 7 characters long",
-    }),
-});
+// const formSchema = z.object({
+//   email: z
+//     .string()
+//     .min(1, {
+//       message: "Please enter your email address",
+//     })
+//     .email({
+//       message: "Please enter a valid email address",
+//     }),
+//   password: z
+//     .string()
+//     .min(1, {
+//       message: "Please enter your password",
+//     })
+//     .min(7, {
+//       message: "Password must be at least 7 characters long",
+//     }),
+// });
 
-export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
-  // const backendLoginMutation = useMutation({
-  //   mutationFn: async (uid: string) => {
-  //     return await JwtAuthService.loginWithFirebaseUid(uid);
-  //   },
-  // });
+export function UserAuthForm({ className }: UserAuthFormProps) {
   const router = useRouter();
 
-  const loginMutation = useMutation({
-    mutationFn: async (data: z.infer<typeof formSchema>) => {
-      return await FirebaseAuthService.signInWithEmailAndPassword(
-        data.email,
-        data.password
-      );
-    },
-  });
+  // const loginMutation = useMutation({
+  //   mutationFn: async (data: z.infer<typeof formSchema>) => {
+  //     return await FirebaseAuthService.signInWithEmailAndPassword(
+  //       data.email,
+  //       data.password
+  //     );
+  //   },
+  // });
 
   const googleLoginMutation = useMutation({
     mutationFn: async () => {
@@ -77,34 +58,30 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     },
   });
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-    mode: "onBlur",
-    criteriaMode: "all",
-  });
+  // const form = useForm<z.infer<typeof formSchema>>({
+  //   resolver: zodResolver(formSchema),
+  //   defaultValues: {
+  //     email: "",
+  //     password: "",
+  //   },
+  //   mode: "onBlur",
+  //   criteriaMode: "all",
+  // });
 
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    form.clearErrors();
-    try {
-      await loginMutation.mutateAsync(data);
-    } catch (error) {
-      if (error instanceof FirebaseAuthError) {
-        showToast("error", {
-          message: "Something went wrong",
-          data: {
-            description: error.message,
-          },
-        });
-      }
-      // handleServerError(error, {
-      //   form: form,
-      // });
-    }
-  };
+  // const onSubmit = async (data: z.infer<typeof formSchema>) => {
+  //   form.clearErrors();
+  //   try {
+  //     await loginMutation.mutateAsync(data);
+  //   } catch (error) {
+  //     if (error instanceof FirebaseAuthError) {
+  //       showToast("error", {
+  //         message: "Something went wrong",
+  //         data: {
+  //           description: error.message,
+  //         },
+  //       });
+  //     }
+  // };
 
   const handleGoogleLogin = async () => {
     await googleLoginMutation.mutateAsync();
@@ -112,7 +89,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
 
   return (
     <div className={cn("grid gap-6", className)}>
-      <Form {...form}>
+      {/* <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="grid gap-3"
@@ -145,7 +122,6 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
             )}
           />
 
-          {/* Show global form error */}
           {(form.formState.errors as any).errors && (
             <p className="text-sm font-medium text-destructive">
               {(form.formState.errors as any).errors.message}
@@ -173,7 +149,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
             Or continue with
           </span>
         </div>
-      </div>
+      </div> */}
 
       <Button
         variant="outline"
