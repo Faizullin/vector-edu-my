@@ -10,7 +10,7 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
-import { JwtAuthService } from "@/lib/jwt-auth";
+import { JwtAuthService } from "@/lib/jwt-auth-service";
 import { SettingsService } from "@/lib/settings-service";
 import { showToast } from "@/utils/handle-server-error";
 import { zodResolver } from "@hookform/resolvers/zod";

@@ -1,7 +1,9 @@
-import { DocumentBase } from "@/types";
+import { DocumentBase, DocumentId } from "@/types";
 
 export interface LessonPageDocument extends DocumentBase {
   order: number;
+  lesson?: DocumentId;
+  title?: string;
 }
 export interface LessonBatchDocument extends DocumentBase {
   title: string;

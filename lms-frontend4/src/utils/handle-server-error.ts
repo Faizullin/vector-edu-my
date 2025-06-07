@@ -76,7 +76,7 @@ type HandleServerErrorType = {
 };
 
 export function handleServerError(
-    error: unknown,
+    error: Error,
     options: HandleServerErrorType = {
         displayType: "toast",
     }
@@ -121,5 +121,6 @@ export function handleServerError(
         }
         return errorBody;
     } else {
+        Log.error("handleServerError", error);
     }
 }

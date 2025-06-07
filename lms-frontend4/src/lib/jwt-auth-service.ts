@@ -58,7 +58,6 @@ export class JwtAuthService {
       Log.error("Error clearing auth data from localStorage", error);
     }
   }
-
   static async loginWithFirebaseToken(token: string) {
     try {
       const response = await simpleRequest<{
@@ -71,7 +70,7 @@ export class JwtAuthService {
         body: {
           token: token,
         },
-        urlPrefix: "/api_users",
+        urlPrefix: "/api/api_users",
         auth: {
           disable: true, // Disable auth for this request
         },
@@ -88,7 +87,6 @@ export class JwtAuthService {
       throw error;
     }
   }
-
   static async getUser() {
     try {
       const response = await simpleRequest<{
@@ -96,7 +94,7 @@ export class JwtAuthService {
       }>({
         url: "/get_user",
         method: "GET",
-        urlPrefix: "/api_users",
+        urlPrefix: "/api/api_users",
       });
       return response!.message;
     } catch (error) {

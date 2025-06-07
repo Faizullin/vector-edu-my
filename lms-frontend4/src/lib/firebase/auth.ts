@@ -11,7 +11,7 @@ import {
 import { removeSession } from "@/actions/auth-actions";
 import { Log } from "@/utils/log";
 import { firebaseAuth } from "./config";
-import { JwtAuthService } from "../jwt-auth";
+import { JwtAuthService } from "../jwt-auth-service";
 
 // export interface FirebaseAuthError {
 //   code: "auth/operation-not-allowed";

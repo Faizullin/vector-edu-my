@@ -1,5 +1,5 @@
 import { BASE_API_URL } from "@/config/constants";
-import { JwtAuthService } from "./jwt-auth";
+import { JwtAuthService } from "./jwt-auth-service";
 
 interface RequestBaseProps {
   url: string;
@@ -23,6 +23,8 @@ interface RequestPostProps extends RequestBaseProps {
   method: "POST" | "PUT" | "PATCH" | "DELETE";
   body?: Record<string, unknown> | FormData;
 }
+
+const useDevApiEnabled = process.env.NEXT_PUBLIC_USE_DEV_API_ENABLED === "true";
 
 export class ApiError extends Error {
   public readonly status: number;
@@ -73,7 +75,7 @@ export const getAuthHeaders = async ({
   headers,
   auth,
 }: {
-  auth: { token?: string; disable?: boolean } | undefined;
+  auth?: { token?: string; disable?: boolean };
   headers?: Record<string, unknown>;
 }) => {
   const headersWithBearer: Record<string, unknown> = {
@@ -106,9 +108,9 @@ export const getUrl = ({
   const queryString = new URLSearchParams(
     params as Record<string, string>
   ).toString();
-  return `${BASE_API_URL}${
-    queryString ? `${urlPrefix}${url}/?${queryString}` : `${urlPrefix}${url}/`
-  }`;
+  const baseApiUrl = useDevApiEnabled ? "http://localhost:3000" : BASE_API_URL;
+  return `${baseApiUrl}${queryString ? `${urlPrefix}${url}/?${queryString}` : `${urlPrefix}${url}/`
+    }`;
 };
 
 const getPostBody = (body: Record<string, unknown> | FormData) => {
@@ -118,40 +120,40 @@ const getPostBody = (body: Record<string, unknown> | FormData) => {
   return JSON.stringify(body);
 };
 
-export async function simpleRequest<T>({
-  url,
-  params = {},
-  headers = {},
-  signal,
-  auth,
-  urlPrefix = "/api/v1/lms",
-  ...props
-}: RequestGetProps | RequestPostProps): Promise<T | undefined> {
+export async function simpleRequest<T>(props: RequestGetProps | RequestPostProps): Promise<T | undefined> {
+  const { url, params, headers, signal, auth, urlPrefix = "/api/v1/lms" } = props;
   const fullUrl = getUrl({
     url,
     params: params,
     urlPrefix,
   });
-
-  const headersWithBearer = await getAuthHeaders({
-    headers,
-    auth,
-  });
+  const headersWithBearer: Record<string, any> = {
+    ...await getAuthHeaders({
+      headers,
+      auth,
+    })
+  };
   let response;
-  const method = props.method || "GET";
-  if (method === "GET") {
+  if (props.method === undefined || props.method === "GET") {
     response = await fetch(fullUrl, {
-      method,
+      method: props.method,
       headers: headersWithBearer,
+      signal,
+    });
+  } else if (
+    props.method === "POST" || props.method === "PUT" || props.method === "PATCH" || props.method === "DELETE"
+  ) {
+    if (props.body && (props.body instanceof FormData)) {
+      delete headersWithBearer["Content-Type"]; // FormData sets its own Content-Type
+    }
+    response = await fetch(fullUrl, {
+      method: props.method,
+      headers: headersWithBearer,
+      body: getPostBody(props.body!),
       signal,
     });
   } else {
-    response = await fetch(fullUrl, {
-      method,
-      headers: headersWithBearer,
-      body: getPostBody((props as RequestPostProps).body || {}),
-      signal,
-    });
+    throw new Error(`Unsupported HTTP method: ${props.method}`);
   }
   if (!response.ok) {
     const status = response.status;
@@ -173,7 +175,7 @@ export async function simpleRequest<T>({
       statusText,
       errorData,
       url,
-      method
+      props.method || "GET"
     );
   }
 

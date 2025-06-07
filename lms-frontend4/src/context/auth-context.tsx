@@ -3,7 +3,7 @@
 import { createSession } from "@/actions/auth-actions";
 import { URLS } from "@/config/constants";
 import { FirebaseAuthService } from "@/lib/firebase/auth";
-import { JwtAuthService } from "@/lib/jwt-auth";
+import { JwtAuthService } from "@/lib/jwt-auth-service";
 import { cn } from "@/lib/utils";
 import { AuthUser } from "@/types";
 import { User } from "firebase/auth";
@@ -151,7 +151,7 @@ const useSignInSuccessRedirect = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectFn = useCallback(() => {
-    const redirectUrl = searchParams.get("redirect") || URLS.HOME;
+    const redirectUrl = searchParams?.get("redirect") || URLS.HOME;
     router.replace(redirectUrl, {
       scroll: false,
     });
